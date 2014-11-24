@@ -1,6 +1,27 @@
 \chapter{Abstract model}
+
+To understand CHERI as a programmer target, it is important to understand the abstract machine that CHERI exposes.  This is intended to be compliant with C abstract machine, yet provide strong memory safety guarantees that can serve as foundations for security properties.
+
 \section{Capabilities as pointers}
+
+CHERI provides \keyword{memory capabilities} to limit access to \keyword{virtual memory}.  Software can only access the subset of its virtual address space for which it has valid capabilities.  Each load or store operation---including instructions and instruction fetch---rely on implicit or capabilities.  MIPS load and store operations are indirected via the \keyword{ambient data capability} (\creg{0}), CHERI load and store operations take explicit capability operands.
+
+Capabilities grant some permissions on a range of memory, identified by a base and a length.  The CHERIv3 ISA extends this to incorporate an \keyword{offset}, intended to make it possible to use capabilities, rather than integers, as pointers in C-like languages.  You can perform arbitrary arithmetic on a capability's offset, but can only dereference it if it lies within the bounds and you have the relevant permissions.
+
 \section{Operations on capabilities}
+
+CHERI does not allow arbitrary privilege elevation.  A piece of code can disclaim a capability, by simply overwriting it with some data.  It can also limit a capability by reducing its length, increasing its base (which decreases its length by a corresponding amount), or reducing the set of permissions.  All of these operations provide a monotonic decrease in the access that a capability grants.  If you have a capability to an allocation, for example an array, then you can construct capabilities to a range within the array, or capabilities that can only read or write (but not both) to the array, but you can not use it to construct a capability that allows you to write past the end of the array.
+
+The offset, as previously mentioned, is exempt from the monotonic property.  It may be set to any value, but any load and store that attempts to access outside of the permitted range will fail.  
+
 \section{Integers in capabilities}
+
+One important property of C is the existence of types such as \ccode{intptr_t}, that can store either a pointer or an integer and can be operated on as if they were integers.  Integers can be stored in capabilities using the offset: a null capability grants no rights, but can have an offset anywhere in the virtual address space.  The offset can therefore be used to store integer values.
+
 \section{The different ABIs}
 
+Incremental adoption is one of the goals of CHERI.  All existing unmodified binaries for the base architecture are expected to work.  More importantly, it should be possible to run unmodified programs with modified libraries and vice versa.
+
+With this in mind, we support two ABIs, discussed more in \autoref{chp:abis}.  One is a small extension to the base ABI, permitting \textit{some} pointers to be capabilities, but with the expectation that \creg{0} encompasses the entire (or majority of the) address space and that the memory protection can be deliberately bypassed.  The second, the \sandboxABI{}, is intended to be used when compatibility is not a concern and uses capabilities for all pointer, as well as for the stack.
+
+With care, it is possible to mix the use of both ABIs within a single program.  The layout of various data structures will be different, so the programmer is responsible for ensuring that data is correctly marshaled at boundaries.

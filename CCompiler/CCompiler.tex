@@ -1,11 +1,90 @@
 \chapter{C compiler support}
+
+The CHERI version of \keyword{Clang}, the C language front end for LLVM, has been modified to expose capabilities at the C level.
+
 \section{Supported targets}
-\section{The sandbox ABI}
+
+When targeting CHERI, you must specify a \keyword{target triple} that contains \flag{cheri} in the CPU part.  The most common triple to use is \flag{cheri-unknown-freebsd}.  This triple contains three portions, in the form \textit{cpu-vendor-os}.  The vendor is irrelevant, only the CPU and OS matter for code generation.
+
+There are two ways to pass the triple to Clang.  The first is to add a \flag{-target} flag, followed by your triple, to your compile flags.  The second is to create a symbolic link to clang of the form \textit{cheri-unknown-freebsd-clang}.  
+
+\begin{notebox}{\file{build\_sdk.sh}}
+If you have the cross-compiler from the SDK, then it will automatically have its default target triple (and sysroot) configured correctly.  You can omit the \flag{-target} option.  You can see the default target triple by passing \flag{-v} to \file{clang}.
+\end{notebox}
+
+\section{The \sandboxABI}
+
+\index{sandbox ABI}
+You can select the \sandboxABI{} by passing \flag{-mabi=sandbox} to clang.  When compiling in this mode, \textit{all} pointers will be represented as capabilities.\footnote{With the current exception of function pointers.}
+
+The compiler will infer the size of all stack allocations automatically and expects memory allocators to set the size appropriately for their allocations.
+
+C code in this model will not contain any non-capability load or store instructions.  This means that it is safe to clear the ambient data capability (\creg{0}) when in this mode.  It could be used as a general-purpose capability register, but is not currently.  In this mode, or one where the ambient data capability is very limited in scope, this provides full memory safety.
+
 \section{Pointer qualifiers}
+
+\index{pointers}\index{qualifiers}
+In the compatible ABI, the \ccode{__capability} qualifier indicates that a pointer should be represented by a memory capability.
+
 \section{Pragmas for generating capabilities}
+
 \section{Compiler builtins}
+\section{Predefined macros}
 \section{\ccode{__intcap_t}}
-\section{\ccode{memcap.h}}
-\section{Doesn't exist yet.  Should.}
+
+CHERI provides two builtin types, \ccode{__intcap_t} and \ccode{__uintcap_t}.  These are expected to be \ccode{typedef}'d to \ccode{[u]intcap_t} in the compatible ABI and \ccode{[u]intptr_t} in the \sandboxABI.  These types are the same sizes as capabilities (i.e. \ccode{sizeof(__intcap_t) == sizeof(__capability void*)}).  
+
+As with \ccode{intptr_t} in conventional C code, the goal for these types is to support any integer value or any pointer value, and to allow arbitrary arithmetic.  The C standard requires that, if \ccode{intptr_t} exists, it should be possible to store a pointer in it and recover the same pointer.  Most C code expects to be able to also perform arithmetic on the pointer value.
+
+\index{null capability}
+When an integer value is cast to an \ccode{__intcap_t}, the compiler will set that integer as the offset of a canonical null capability.  Any arithmetic on an \ccode{__intcap_t} value is performed by extracting its offset, manipulating it, and then setting it.  This ensures that integer arithmetic on \ccode{__intcap_t} values derived from integers will work precisely as expected.  Arithmetic on values derived from pointers (capabilities) is a little bit more complex.  Masking to access the unused low and high bits should still work as expected, as should addition.  Multiplication and division, however, will not.
+
+Comparisons between \ccode{__intcap_t} values use special pointer comparison instructions.  These have the semantics that any untagged capability (including those derived from the null capability) will compare before those with a valid tag.  Within these two regions, capabilities are compared based on their absolute virtual addresses (i.e. base + offset).
+
+%\section{\ccode{memcap.h}}
+%\dcnote{Doesn't exist yet.  Should.}
 \section{Compiler assistance for cross-domain calls}
 
+It is important to avoid leaking rights (and other information) when calling between security contexts.  CHERI implements cross-domain calls via a special instruction (\asm{ccall}) that traps to the kernel to perform the domain transition.  The kernel is responsible for saving and zeroing all callee-save registers and clearing all caller-save registers.  On return, the same code in the kernel will restore all callee-save registers and (again) zero caller-save registers.
+
+The kernel does not know precisely what the arguments are for any function that is involved in a cross-domain call and so can not clear the unused argument registers on call, nor the unused return registers on return.  If a function is annotated with \ccode{__attribute__((cheri_ccall))} then the compiler will do this.  
+
+Functions with this calling convention have two extra capability argument registers, \creg{1} and \creg{2}, which contain the code and data capabilities.  Consider the following simple program:
+
+\begin{csnippet}
+typedef struct
+{
+	__capability void *code;
+	__capability void *__capability*data;
+} cobj;
+
+__attribute__((cheri_ccall))
+__capability void *cgetdata(cobj c)
+{
+	return *c.data;
+}
+
+__attribute__((cheri_ccall))
+int cgetnumber(cobj c)
+{
+	return 42;
+}
+\end{csnippet}
+
+This contains two simple functions that are expected to be invoked as part of a domain transition.  The first returns a capability from inside its data capability, the second returns a constant.  In the first, the return value is a capability and so will be returned in capability register \creg{3}.  The two integer return registers (\reg{2} and \reg{3}, sometimes called \reg{v0} and \reg{v1}) are unused.  The compiler will generate this code for the return:
+
+\begin{asmsnippet}
+	clc     $c3, $zero, 0($c2)
+	daddiu  $2, $zero, 0
+	daddiu  $3, $zero, 0
+\end{asmsnippet}
+
+The return value is loaded into \creg{3}.  The two integer return values are zeroed.  In the second function, one of the integer return registers is used, but the capability registers are not.  The compiler generates this code:
+
+\begin{asmsnippet}
+	cfromptr  $c3, $c0, $zero
+	addiu     $2, $zero, 42
+	daddiu    $3, $zero, 0
+\end{asmsnippet}
+
+In this case, the first integer return register is set to 42, but the other return registers are cleared.  

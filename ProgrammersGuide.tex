@@ -1,13 +1,17 @@
 \documentclass[10pt,a4paper]{book}
+\usepackage{float}
 \usepackage[svgnames]{xcolor}
+\usepackage{makeidx}
 \usepackage{graphicx,hyperref,listings,pgfplots,pgfplotstable,url}
 \usepackage{booktabs,tabu}
 \newcommand{\headercell}[1]{\scshape{#1}}
 \newcommand{\headerrow}{\rowfont[c]{\headercell}}
-\usepackage{listings}
 \usepackage{quoting}
+\usepackage[color]{changebar}
 \quotingsetup{vskip=1mm,leftmargin=1em,rightmargin=1em}
 \usetikzlibrary{patterns}
+
+\usepackage{listings}
 \lstset{
     basicstyle={\ttfamily},
     breaklines=true,
@@ -28,10 +32,57 @@
           numbers=none,
           #1,
           basicstyle=\small\ttfamily}}{}
-  \newcommand{\ccode}[1]{\lstinline[language={C}]{#1}}
-  \newcommand{\asm}[1]{\lstinline[language={}]{#1}}
-  \newcommand{\ir}[1]{\lstinline[language={}]{#1}
+
+\lstnewenvironment{csnippet}[1][]{
+  \lstset{backgroundcolor=\color{white},
+          numbers=none,
+          language=C,
+          basicstyle=\small\ttfamily}}{}
+\lstnewenvironment{asmsnippet}[1][]{
+  \lstset{backgroundcolor=\color{white},
+          numbers=none,
+		  language={},
+          basicstyle=\small\ttfamily}}{}
+\lstnewenvironment{irsnippet}[1][]{
+  \lstset{backgroundcolor=\color{white},
+          numbers=none,
+		  language={},
+          basicstyle=\small\ttfamily}}{}
+
+
+\floatstyle{boxed}
+\newfloat{notefloat}{htb}{note}
+\newlength{\textwithborderwidth}
+\setlength{\textwithborderwidth}{\textwidth}
+\newenvironment{notebox}[1]
+{
+	\begin{notefloat}
+		\centering\begin{minipage}{\textwithborderwidth}\normalsize {\rule{0pt}{0pt}\\[2pt]{\Large \textbf{Note:} #1}}\\[1.5ex]\setlength{\parindent}{1em}
 }
+{
+	\rule[-4pt]{0pt}{0pt}
+	\end{minipage}
+	\end{notefloat}
+}
+
+\newcommand{\ccode}[1]{\lstinline[language={C}]{#1}}
+\newcommand{\asm}[1]{\lstinline[language={}]{#1}}
+\newcommand{\ir}[1]{\lstinline[language={}]{#1}}
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\flag}[1]{\texttt{#1}}
+\makeindex
+
+\newenvironment{mips}
+{
+\cbcolor{red}
+\begin{changebar}
+}
+{
+\end{changebar}
+}
+
+
+\newcommand{\keyword}[1]{\textit{#1}\index{#1}}
 
 \newcommand{\note}[3]{{\color{#3}[ #1---#2 ]}}
 % Uncomment for final version:
@@ -39,13 +90,25 @@
 \newcommand{\dcnote}[1]{\note{#1}{David}{blue}}
 \newcommand{\rwnote}[1]{\note{#1}{Robert}{red}}
 
+\newcommand{\reg}[1]{\textbf{\$#1}}
+\newcommand{\creg}[1]{\reg{C#1}}
+
+\newcommand{\mipsABI}{MIPS n64 ABI}
+\newcommand{\hybridABI}{hybrid ABI}
+\newcommand{\sandboxABI}{sandbox ABI}
+
+\newcommand{\mipsspecific}[1]{#1$^{\color{red}[MIPS~specific]}$}
+
 \title{CHERI Programmers' Guide}
 
 \begin{document}
 \maketitle
+\input{Intro.tex}
 \input{AbstractModel/AbstractModel.tex}
 \input{CCompiler/CCompiler.tex}
 \input{LLVM/LLVM.tex}
 \input{ABI/ABI.tex}
+
+\printindex
 
 \end{document}
