@@ -1,0 +1,7 @@
+*~
+*.aux
+*.fls
+*.log
+*.fdb_latexmk
+*.sw?
+ProgrammersGuide.pdf

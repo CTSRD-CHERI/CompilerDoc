@@ -1,0 +1,51 @@
+\documentclass[10pt,a4paper]{book}
+\usepackage[svgnames]{xcolor}
+\usepackage{graphicx,hyperref,listings,pgfplots,pgfplotstable,url}
+\usepackage{booktabs,tabu}
+\newcommand{\headercell}[1]{\scshape{#1}}
+\newcommand{\headerrow}{\rowfont[c]{\headercell}}
+\usepackage{listings}
+\usepackage{quoting}
+\quotingsetup{vskip=1mm,leftmargin=1em,rightmargin=1em}
+\usetikzlibrary{patterns}
+\lstset{
+    basicstyle={\ttfamily},
+    breaklines=true,
+    commentstyle={\color{Blue}},
+    extendedchars=true,
+    keywordstyle={[0]\color{Green}},
+    keywordstyle={[1]\color{Brown}},
+    keywordstyle={[2]\color{DarkMagenta}},
+    keywordstyle={[3]\color{Maroon}},
+    keywordstyle={[4]\color{Blue}},
+    showspaces=false,
+    showstringspaces=false,
+    stringstyle={\color{IndianRed}},
+    tabsize=2
+}
+\lstnewenvironment{shortlisting}[1][]{
+  \lstset{backgroundcolor=\color{white},
+          numbers=none,
+          #1,
+          basicstyle=\small\ttfamily}}{}
+  \newcommand{\ccode}[1]{\lstinline[language={C}]{#1}}
+  \newcommand{\asm}[1]{\lstinline[language={}]{#1}}
+  \newcommand{\ir}[1]{\lstinline[language={}]{#1}
+}
+
+\newcommand{\note}[3]{{\color{#3}[ #1---#2 ]}}
+% Uncomment for final version:
+%\renewcommand{\note}[3]{}
+\newcommand{\dcnote}[1]{\note{#1}{David}{blue}}
+\newcommand{\rwnote}[1]{\note{#1}{Robert}{red}}
+
+\title{CHERI Programmers' Guide}
+
+\begin{document}
+\maketitle
+\input{AbstractModel/AbstractModel.tex}
+\input{CCompiler/CCompiler.tex}
+\input{LLVM/LLVM.tex}
+\input{ABI/ABI.tex}
+
+\end{document}
