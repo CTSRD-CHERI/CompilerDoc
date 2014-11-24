@@ -4,4 +4,10 @@
 *.log
 *.fdb_latexmk
 *.sw?
+*.cb
+*.cb?
+*.idx
+*.ilg
+*.ind
+*.out
 ProgrammersGuide.pdf
