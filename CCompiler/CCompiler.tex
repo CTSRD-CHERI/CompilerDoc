@@ -25,11 +25,139 @@ C code in this model will not contain any non-capability load or store instructi
 
 \index{pointers}\index{qualifiers}
 In the compatible ABI, the \ccode{__capability} qualifier indicates that a pointer should be represented by a memory capability.
+For example:
+
+\begin{csnippet}
+void *a; // 64-bit integer interpreted as a pointer
+__capability void *b; // 256-bit capability interpreted as a pointer
+\end{csnippet}
+
+Implicit casts between capability and integer pointers are not permitted.
+This is an intentional design decision, as such casts require careful thought to ensure that they are valid.
 
 \section{Pragmas for generating capabilities}
 
+\index{pointer\_interpretation pragma}
+Often is it useful to define a block of code where pointers will be interpreted as either capabilities or integers, rather than having to annotate them individually.
+This is possible with the \ccode{pointer_interpretation} pragma.
+As with other C99 pragmas, this can be used either with the \ccode{#pragma} or \ccode{_Pragma()} syntax.
+
+The valid options for this pragma are listed in \autoref{tbl:pointerinterpretation}.
+Most uses of this pragma are likely to be via macros that explicitly push and pop.
+For example, the following definitions provide a mechanism for defining ranges:
+
+\begin{table}
+	\begin{center}
+		\begin{tabu}{*{2}{c}}
+			\toprule
+			\headerrow
+			Option & Meaning\\
+			\midrule
+			\ccode{push} & Save the current interpretation. \\
+			\ccode{pop} & Restore a previously saved interpretation. \\
+			\ccode{integer} & Pointers are represented by integers. \\
+			\ccode{capability} & Pointers are represented by capabilities. \\
+			\ccode{default} & Pointers are represented by whatever the default is for this target. \\
+			\bottomrule
+		\end{tabu}
+		\caption{\label{tbl:pointerinterpretation}The valid options for the pointer interpretation pragma.}
+	\end{center}
+\end{table}
+
+\begin{csnippet}
+#if __has_feature(pointer_interpretation)
+#	define BEGIN_CAPABILITIES \
+		_Pragma("pointer_interpretation push") \
+		_Pragma("pointer_interpretation capability")
+#	define END_CAPABILITIES \
+		_Pragma("pointer_interpretation pop")
+#	define BEGIN_NO_CAPABILITIES \
+		_Pragma("pointer_interpretation push") \
+		_Pragma("pointer_interpretation integer")
+#	 END_NO_CAPABILITIES
+		_Pragma("pointer_interpretation pop")
+#else
+#	define BEGIN_CAPABILITIES
+		_Pragma("GCC error \"Compiler does not support capabilities\"")
+#	define END_CAPABILITIES
+		_Pragma("GCC error \"Compiler does not support capabilities\"")
+#	define BEGIN_NO_CAPABILITIES
+#	define END_NO_CAPABILITIES
+#endif
+\end{csnippet}
+
+When compiled with a compiler that supports this pragma, they will have their expected meanings (including correctly handling nesting).
+When compiled with another compiler, the \ccode{NO_CAPABILITIES} versions will be silently ignored, but the \ccode{CAPABILITIES} versions will raise an error.
+
+This allows code like this:
+
+\begin{csnippet}
+BEGIN_CAPABILITIES
+struct test
+{
+	int *a,*b,*c;
+} t;
+END_CAPABILITIES
+\end{csnippet}
+
+This is equivalent to explicitly annotating each field in the \ccode{struct} with the \ccode{__capability} annotation.
+
+
 \section{Compiler builtins}
 \section{Predefined macros}
+
+CHERI Clang provides a number of feature test macros, shown in \autoref{tbl:featmacros}.
+These are intended to be used to check for specific functionality and conditionally compile code.
+
+\begin{table}
+	\begin{center}
+		\begin{tabu}{llp{5cm}}
+			\toprule
+			\headerrow
+			Macro & Value & Meaning \\
+			\midrule
+			\ccode{_MIPS_ARCH} & \ccode{"cheri"} & The variant of the MIPS architecture in use. \\
+			\ccode{_MIPS_ARCH_CHERI} & 1 & CHERI is the target (MIPS-specific). \\
+			\ccode{__CHERI__} & 1 & CHERI is the target (may be used for non-MIPS implementations). \\
+			\ccode{_MIPS_SZCAP} & 256 & The size of a capability (in bits). \\
+			\ccode{__CHERI_SANDBOX__} & 1 & Set only if targeting the sandbox ABI.\\
+			\bottomrule
+		\end{tabu}
+		\caption{\label{tbl:featmacros} Feature test predefined macros supported by CHERI Clang}
+	\end{center}
+\end{table}
+
+\sloppy
+Additionally, the permission flags are provided as symbolic constants in the form of predefined macros.
+These all start with \ccode{__CHERI_CAP_PERMISSION_} followed by a suffix from \autoref{tbl:permmacros}.
+For example, \ccode{__CHERI_CAP_PERMISSION_PERMIT_SEAL__} is the permission bit for sealing.
+
+\begin{table}
+	\begin{center}
+		\begin{tabu}{llp{4cm}}
+			\toprule
+			\headerrow
+			Macro suffix & Value & Meaning \\
+			\midrule
+			\ccode{_GLOBAL__} & 1 & Global ``permission'' flag value. \\
+			\ccode{_PERMIT_EXECUTE__} & 2 & Execute permission flag value. \\
+			\ccode{_PERMIT_LOAD__} & 4 & Load (data) permission flag value. \\
+			\ccode{_PERMIT_STORE__} & 8 & Store (data) permission flag value. \\
+			\ccode{_PERMIT_LOAD_CAPABILITY__} & 16 & Load-capability permission flag value. \\
+			\ccode{_PERMIT_STORE_CAPABILITY__} & 32 & Store-capability permission flag value. \\
+			\ccode{_PERMIT_STORE_LOCAL__} & 64 & Store ephemeral permission flag value. \\
+			\ccode{_PERMIT_SEAL__} & 128 & Seal permission flag value. \\
+			\ccode{_ACCESS_EPCC__} & 1024 & Access \reg{epcc} permission flag value. \\
+			\ccode{_ACCESS_KCC__} & 4096 & Access \reg{kcc} permission flag value. \\
+			\ccode{_ACCESS_KDC__} & 2048 & Access \reg{kdc} permission flag value. \\
+			\ccode{_ACCESS_KR1C__} & 8192 & Access \reg{kr1c} permission flag value.\\
+			\ccode{_ACCESS_KR2C__} & 16384 & Access \reg{kr2c} permission flag value.\\
+			\bottomrule
+		\end{tabu}
+		\caption{\label{tbl:permmacros} Suffixes of permission value predefined macros supported by CHERI Clang.  \ccode{__CHERI_CAP_PERMISSION_} is prefixed to all of these.}
+	\end{center}
+\end{table}
+
 \section{\ccode{__intcap_t}}
 
 CHERI provides two builtin types, \ccode{__intcap_t} and \ccode{__uintcap_t}.  These are expected to be \ccode{typedef}'d to \ccode{[u]intcap_t} in the compatible ABI and \ccode{[u]intptr_t} in the \sandboxABI.  These types are the same sizes as capabilities (i.e. \ccode{sizeof(__intcap_t) == sizeof(__capability void*)}).  
@@ -40,6 +168,23 @@ As with \ccode{intptr_t} in conventional C code, the goal for these types is to 
 When an integer value is cast to an \ccode{__intcap_t}, the compiler will set that integer as the offset of a canonical null capability.  Any arithmetic on an \ccode{__intcap_t} value is performed by extracting its offset, manipulating it, and then setting it.  This ensures that integer arithmetic on \ccode{__intcap_t} values derived from integers will work precisely as expected.  Arithmetic on values derived from pointers (capabilities) is a little bit more complex.  Masking to access the unused low and high bits should still work as expected, as should addition.  Multiplication and division, however, will not.
 
 Comparisons between \ccode{__intcap_t} values use special pointer comparison instructions.  These have the semantics that any untagged capability (including those derived from the null capability) will compare before those with a valid tag.  Within these two regions, capabilities are compared based on their absolute virtual addresses (i.e. base + offset).
+
+\section{Inline assembly}
+
+Clang supports GNU-style inline assembly.
+When targeting CHERI, \ccode{"C"} can be used as a register constraint indicating that a particular operand is a capability.
+For example, to access the value in \creg{0}, you might write:
+
+\begin{csnippet}
+__capability void *c0;
+__asm__ __volatile__ ("cmove %0, $c0"
+	: "=C"(c0) /* c0 is a capability output operand */
+	: /* No input operands */
+	: /* No clobbers */
+	);
+\end{csnippet}
+
+Note that the \ccode{=} prefix is required to indicate that this is an output register, for input operands \ccode{"C"} is correct.
 
 %\section{\ccode{memcap.h}}
 %\dcnote{Doesn't exist yet.  Should.}
