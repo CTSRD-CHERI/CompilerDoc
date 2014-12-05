@@ -1,5 +1,112 @@
 \chapter{LLVM implementation}
-\section{Data layout}
+
+The changes in LLVM can be roughly split into two components: those specific to the MIPS back end and those in generic code.
+The MIPS back end changes are specific to the current CHERI implementation.
+The remainder are generic changes to support memory capabilities in the middle of the optimization pipeline and in the target-independent code generator.
+
 \section{Address space 200}
+\index{address space 200}
+
+We reserve address space 200 to be the address space used for capabilities.
+This is below 256 and so is a target-agnostic address space.
+We assume that other architectures providing support for memory capabilities would use the same address space.
+
+\section{Data layout}
+\label{sec:datalayout}
+
+To support the \sandboxABI{}, the data layout string is modified to define the address space for \ir{alloca} instructions.
+It's assumed that, within a compilation unit, every \ir{alloca} returns a pointer in the same address space.
+By default, this is address space 0, but when targeting the sandbox ABI it is set to 200.
+
+\index{stack capability}
+In the MIPS back end, a pass will replace each of these allocas (and all of their uses) with one in address space 0, followed by calls to two intrinsics.
+The first intrinsic derives a \creg{11}-relative capability from the integer value.
+The second sets its length to the size of the alloca.
+
+This allows the normal MIPS stack pointer to be used as an offset within \creg{11}.
+
+A lot of optimizations, in particular scalar evolution and the SLP vectorizer, assume that the size of a pointer is the size of an integer that can express its range.
+As a result, they will attempt to create \ir{i256} operands to various pointer arithmetic operations.
+To avoid this, the \ccode{DataLayout} class now provides a few variants of \ccode{getPointerBaseSize()} methods, which get the size of the base of a fat pointer or capability.
+For non-capability pointer types, these simply return the size.
+
+\section{SelectionDAG types}
+
+In LLVM, one of the early parts of the target-independent code generator replaces all pointers with an integer of the correct size.
+On CHERI, this would be an \ir{i256}, which is not a valid type for the target and would cause other problems if the definition allowed the rest of the code generator to assume that 256-bit integers were supported.
+
+To avoid this, we add an \ccode{MVT::iFATPTR} machine value type to the code generator.
+This can be used for any non-integer pointer and can be pattern matched by any of the \index{tablegen} \file{tablegen}-generated matching code.
+
+We also add \ccode{ISD::INTTOPTR} and \ccode{ISD::PTRTOINT} SelectionDAG nodes.
+These represent conversions between \ccode{MVT::iFATPTR} and integer types and are generated from any address space cast instructions between address spaces 0 and 200, as well as \ir{inttoptr} and \ir{ptrtoint} IR instructions.
+In the MIPS back end, these expand to \asm{CToPtr} and \asm{CFromPtr} instructions.
+
+The conventional way of expressing pointer arithmetic in the SelectionDAG is via normal arithmetic nodes.
+This works because the \ccode{MVT::iPTR} type is lowered to an integer type (typically \ccode{MVT::i32} or \ccode{MVT::i64}) in the legalization phase.
+The \ccode{ADD} SelectionDAG node has the invariant that the operands must be the same type.
+This does not work for pointer addition with fat pointers, because one operand is the pointer and the other is the integer value that is being added to the pointer, which will typically be \ccode{MVT::iFATPTR} and \ccode{MVT::i64} respectively for CHERI.
+
+To address this, we add another new SelectionDAG node: \ccode{ISD::PTRADD}.
+This is naïvely lowered to \asm{CIncOffset} in the MIPS back end, but may later be folded to use a complex addressing mode.
+
 \section{LLVM IR Intrinsics}
+
+The MIPS back end exposes a number of intrinsics in LLVM IR, listed in \autoref{tbl:intrinsics}.
+Some of these, shown above the line in the table, may later be replaced by generic memory capability intrinsics.
+The remainder are specific to the MIPS implementation of the CHERI modell.
+
+Most intrinsics map directly to a specific instruction.
+A small number fix some of the operands.
+For example, all of the accessors for the special registers will move the value of a specific register into an SSA register, which will then be replaced with a real register (whose number is not under programmer control) during register allocation.
+
+\begin{table}
+	\begin{center}
+		\begin{tabu}{ll}
+			\toprule
+			\headerrow
+			LLVM intrinsic & CHERI instruction\\
+			\midrule
+			\ir{llvm.mips.cap.length.set} & \asm{CSetLen} \\
+			\ir{llvm.mips.cap.length.get} & \asm{CGetLen} \\
+			\ir{llvm.mips.cap.base.increment} & \asm{CIncBase} \\
+			\ir{llvm.mips.cap.base.get} & \asm{CGetBase} \\
+			\ir{llvm.mips.cap.perms.and} & \asm{CAndPerm} \\
+			\ir{llvm.mips.cap.perms.get} & \asm{CGetPerm} \\
+			\ir{llvm.mips.cap.type.set} & \asm{CSetType} \\
+			\ir{llvm.mips.cap.type.get} & \asm{CGetType} \\
+			\ir{llvm.mips.cap.tag.get } & \asm{CGetTag} \\
+			\ir{llvm.mips.cap.unsealed.get } & \asm{CGetUnsealed} \\
+			\ir{llvm.mips.cap.tag.clear } & \asm{CClearTag} \\
+			\ir{llvm.mips.cap.seal} & \asm{CSeal} \\
+			\ir{llvm.mips.cap.unseal } & \asm{CUnseal} \\
+			\ir{llvm.mips.cap.perms.check} & \asm{CCheckPerm} \\
+			\ir{llvm.mips.cap.type.check} & \asm{CCheckType} \\
+			\ir{llvm.mips.cap.offset.increment} & \asm{CIncOffset} \\
+			\ir{llvm.mips.cap.offset.set} & \asm{CSetOffset} \\
+			\ir{llvm.mips.cap.offset.get} & \asm{CGetOffset} \\
+			\ir{llvm.mips.cap.base.only.increment} & \asm{CIncBase2} \\
+			\midrule
+			\ir{llvm.mips.cap.cause.get} & \asm{CGetCause} \\
+			\ir{llvm.mips.cap.cause.set} & \asm{CSetCause} \\
+			\ir{llvm.mips.c0.get} & \asm{CMove \%0, $v0} \\
+			\ir{llvm.mips.pcc.get} & \asm{CGetPCC} \\
+			\ir{llvm.mips.idc.get} & \asm{CMove \%0, $c26} \\
+			\ir{llvm.mips.kr1c.get} & \asm{CMove \%0, $c27} \\
+			\ir{llvm.mips.kr2c.get} & \asm{CMove \%0, $c28} \\
+			\ir{llvm.mips.kcc.get} & \asm{CMove \%0, $c29} \\
+			\ir{llvm.mips.kdc.get} & \asm{CMove \%0, $c30} \\
+			\ir{llvm.mips.epcc.get} & \asm{CMove \%0, $c31} \\
+			\ir{llvm.mips.stack.to.cap} & \asm{CFromPtr $c11, \%0} \\
+			\bottomrule
+		\end{tabu}
+		\caption{\label{tbl:intrinsics}LLVM intrinsics provided for CHERI.}
+	\end{center}
+\end{table}
+
+The \ir{llvm.mips.stack.to.cap} intrinsic is intended for internal use only.
+As mentioned in \autoref{sec:datalayout}, it is used by the MIPS target when converting the IR from a form where \ir{alloca} instructions are in address space 200, to one where they are in address space 0.
+All \ir{alloca} instructions are replaced with a short sequence of an \ir{alloca} followed by a call to this intrinsic and then a call to the \ir{llvm.mips.cap.length.set} intrinsic.
+All uses of the original \ir{alloca} are then replaced by this value, which is a \creg{11}-derived capability of a defined length.
+
 
