@@ -68,6 +68,12 @@ When a \ccode{va_list} is constructed, the 8 integer values are written out.
 This means that capability arguments in variadic functions are very difficult to support and are currently not expected to work.
 To fix them, we will have to ensure that all arguments after the first capability argument are passed on the stack and that the first capability argument has a mechanism for knowing whether it is in the first 64 bytes of the \ccode{va_list} (and, if so, incrementing the pointer until it's at the end).
 
+\index{sandbox ABI!variadic functions}
+In the sandbox ABI, \textit{all} variadic arguments are passed on the stack, with their natural alignment.
+The \ccode{va_list} is simply a pointer to the first (on-stack) variadic argument and \ccode{va_arg} calls simply ensure correct alignment, load from the pointer, and increment it past the value.
+The alignment requirements can result in large gaps in the variadic argument list.
+
+
 \section{Cross-domain calls: ``ccall''}
 
 The \ir{chericcallcc} calling convention uses registers \creg{1} and \creg{2} for the first two capability arguments.
