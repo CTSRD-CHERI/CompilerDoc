@@ -137,16 +137,16 @@ The remainder (those with \ccode{cheri} in their name) are specific to the curre
 			\ccode{__builtin_memcap_offset_get} & \asm{CGetOffset} \\
 			\ccode{__builtin_memcap_base_only_increment} & \asm{CIncBase2} \\
 			\ccode{__builtin_memcap_program_counter_get} & \asm{CGetPCC} \\
-			\ccode{__builtin_memcap_global_data_get} & \asm{CMove \%0, $v0} %stopzone\\
+			\ccode{__builtin_memcap_global_data_get} & \asm{CMove \%0, $v0} \\ %stopzone
 			\midrule
 			\ccode{__builtin_cheri_cause.get} & \asm{CGetCause} \\
 			\ccode{__builtin_cheri_cause.set} & \asm{CSetCause} \\
-			\ccode{__builtin_cheri_invoke_data_cap_get} & \asm{CMove \%0, $c26} %stopzone\\
-			\ccode{__builtin_cheri_kernel_cap1_get} & \asm{CMove \%0, $c27} %stopzone\\
-			\ccode{__builtin_cheri_kernel_cap1_get} & \asm{CMove \%0, $c28} %stopzone\\
-			\ccode{__builtin_cheri_kernel_code_cap_get} & \asm{CMove \%0, $c29} %stopzone\\
-			\ccode{__builtin_cheri_kernel_data_cap_get} & \asm{CMove \%0, $c30} %stopzone\\
-			\ccode{__builtin_cheri_exception_program_counter_cap_get} & \asm{CMove \%0, $c31} %stopzone\\
+			\ccode{__builtin_cheri_invoke_data_cap_get} & \asm{CMove \%0, $c26} \\ %stopzone
+			\ccode{__builtin_cheri_kernel_cap1_get} & \asm{CMove \%0, $c27} \\ %stopzone
+			\ccode{__builtin_cheri_kernel_cap1_get} & \asm{CMove \%0, $c28} \\ %stopzone
+			\ccode{__builtin_cheri_kernel_code_cap_get} & \asm{CMove \%0, $c29} \\ %stopzone
+			\ccode{__builtin_cheri_kernel_data_cap_get} & \asm{CMove \%0, $c30} \\ %stopzone
+			\ccode{__builtin_cheri_exception_program_counter_cap_get} & \asm{CMove \%0, $c31} \\ %stopzone
 			\bottomrule
 		\end{tabu}
 		\caption{\label{tbl:builtins}C built-in functions provided for CHERI.}
