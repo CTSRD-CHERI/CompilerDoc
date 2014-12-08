@@ -1,7 +1,87 @@
 \chapter{The CHERI ABIs}
 \label{chp:abis}
 
+The CHERI compiler supports two ABIs, an extended version of the MIPS n64 ABI and the ``sandbox'' ABI where every pointer is a capability.
+The sandbox ABI is intended to evolve to a point where \creg{0} is never used.
+Currently, \creg{0} is used for globals, but not for any other data accesses.
+
 \section{Register usage}
+
+The compiler's use of capability registers is summarised in \autoref{tbl:reguse}.
+Registers \creg{16}--\creg{24} are preserved across calls, as is \creg{0}, which is never modified by the compiler.
+In the sandbox ABI, so is \creg{11} (the stack capability).
+
+\begin{table}
+	\begin{center}
+		\begin{tabu}{ll}
+			\toprule
+			\headerrow
+			Register             & Compiler usage \\
+			\midrule
+			\creg{0}             & Used implicitly for all non-capability memory accesses.\\
+			\creg{1}--\creg{16}  & Used for arguments in the ``fast'' calling convention. \\
+			\creg{1}--\creg{2}   & Code and data capability arguments with the ``ccall'' calling convention. \\
+			\creg{3}             & Capability return value. \\
+			\creg{3}--\creg{10}  & Capability arguments (caller-save). \\
+			\creg{11}            & Stack capability (sandbox ABI). \\
+			\creg{12}            & Used with \asm{cjalr} as the destination register (sandbox ABI). \\
+			\creg{11}--\creg{15} & Temporary (caller-save) registers.\\
+			\creg{17}            & Capability link register used with \asm{cjalr} (sandbox ABI).\\
+			\creg{16}--\creg{24} & Saved (callee-save) registers. \\
+			\creg{25}--\creg{31} & Not used by the compiler.\\
+			\bottomrule
+		\end{tabu}
+		\caption{\label{tbl:reguse}Capability register usage.}
+	\end{center}
+\end{table}
+
+\subsection{The sandbox ABI}
+
+The sandbox ABI uses \creg{11} as a stack capability.
+The \reg{sp} and \reg{fp} registers contain offsets in the stack capability.
+It would make sense to replace \reg{sp} with the offset in \creg{11}.
+This would simplify the addressing modes for the stack and make a lot of spills cheaper in the sandbox ABI.
+
+\dcnote{Currently only true for the capcall branch, but will be merged Real Soon Now™}
+The sandbox ABI uses the capability mechanism to protect the return address.
+In the MIPS ABI, function calls are implemented as \asm{jalr $t9, $ra}.
+In the sandbox ABI, they are \asm{cjalr $c12, $c17}.
+This has two effects.
+The first is that \reg{t9} can no longer be used as a cheap way of getting the program counter for position-independent code.
+Instead, if this value is needed, the compiler will emit \asm{CGetOffset $t9,$c12}, setting \reg{t9} to the \reg{pcc}-relative address of the program counter on function entry.
+
+The second effect is that the return can be emitted as \asm{cjr $c17}.
+If \creg{17} is spilled to the stack, then it is protected by its tag bit.
+If it is overwritten by anything other than an executable capability, then the \asm{cjr} instruction will trap.
+
 \section{Calling conventions}
+
+When targeting the n64 ABI, the only changes to the calling convention are to support capability arguments.
+
+
 \subsection{Variadic calls}
+
+The n64 ABI requires that all arguments to variadic functions are passed either on the stack or in 8 integer registers.
+When a \ccode{va_list} is constructed, the 8 integer values are written out.
+This means that capability arguments in variadic functions are very difficult to support and are currently not expected to work.
+To fix them, we will have to ensure that all arguments after the first capability argument are passed on the stack and that the first capability argument has a mechanism for knowing whether it is in the first 64 bytes of the \ccode{va_list} (and, if so, incrementing the pointer until it's at the end).
+
 \section{Cross-domain calls: ``ccall''}
+
+The \ir{chericcallcc} calling convention uses registers \creg{1} and \creg{2} for the first two capability arguments.
+The front end will lower \ccode{struct}s that fit in registers to a sequence of scalars, so this is typically generated from a two-capability \ccode{struct}.
+The remaining arguments are in the same place as the normal calling convention, allowing a simple jump to tail call functions that do not care about these arguments.
+
+The back end tracks the argument registers that are used by callers of functions with this convention and the return registers that are used by the callee.
+At each call site, it will zero unused argument registers.
+In the callee, it will zero unused return registers.
+
+\begin{notebox}{Soft float}
+	The compiler currently assumes that the soft-float ABI is always used for calls into sandboxes and so does not zero any floating point registers.
+	The CHERIBSD trampoline code in the kernel also makes this assumption, but it will need revisiting once floating point is enabled.
+\end{notebox}
+
+The code that will be generated is described in \autoref{sec:cccall}.
+The compiler assumes that the runtime environment (library or kernel code) is responsible for preserving or zeroing all non-argument registers across security domain transitions.
+The code to do this is the same for all functions and so having only a single instance provides better cache utilization.
+
