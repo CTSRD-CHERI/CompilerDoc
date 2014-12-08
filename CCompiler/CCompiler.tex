@@ -103,7 +103,58 @@ END_CAPABILITIES
 This is equivalent to explicitly annotating each field in the \ccode{struct} with the \ccode{__capability} annotation.
 
 
-\section{Compiler builtins}
+\section{Built-in functions}
+
+The C front end provides a number of built-in functions for manipulating capabilities, listed in \autoref{tbl:builtins}.
+These correspond directly to a single instruction, shown in the table.
+Most of these functions (those with \ccode{memcap} in their name) are generic and should apply to any architecture that supports memory capabilities.
+The remainder (those with \ccode{cheri} in their name) are specific to the current implementation.
+
+\begin{table}
+	\begin{center}
+		\begin{tabu}{ll}
+			\toprule
+			\headerrow
+			Clang builtin & CHERI instruction\\
+			\midrule
+			\ccode{__builtin_memcap_length_set} & \asm{CSetLen} \\
+			\ccode{__builtin_memcap_length_get} & \asm{CGetLen} \\
+			\ccode{__builtin_memcap_base_increment} & \asm{CIncBase} \\
+			\ccode{__builtin_memcap_base_get} & \asm{CGetBase} \\
+			\ccode{__builtin_memcap_perms_and} & \asm{CAndPerm} \\
+			\ccode{__builtin_memcap_perms_get} & \asm{CGetPerm} \\
+			\ccode{__builtin_memcap_type_set} & \asm{CSetType} \\
+			\ccode{__builtin_memcap_type_get} & \asm{CGetType} \\
+			\ccode{__builtin_memcap_tag_get } & \asm{CGetTag} \\
+			\ccode{__builtin_memcap_unsealed_get } & \asm{CGetUnsealed} \\
+			\ccode{__builtin_memcap_tag_clear } & \asm{CClearTag} \\
+			\ccode{__builtin_memcap_seal} & \asm{CSeal} \\
+			\ccode{__builtin_memcap_unseal } & \asm{CUnseal} \\
+			\ccode{__builtin_memcap_perms_check} & \asm{CCheckPerm} \\
+			\ccode{__builtin_memcap_type_check} & \asm{CCheckType} \\
+			\ccode{__builtin_memcap_offset_increment} & \asm{CIncOffset} \\
+			\ccode{__builtin_memcap_offset_set} & \asm{CSetOffset} \\
+			\ccode{__builtin_memcap_offset_get} & \asm{CGetOffset} \\
+			\ccode{__builtin_memcap_base_only_increment} & \asm{CIncBase2} \\
+			\ccode{__builtin_memcap_program_counter_get} & \asm{CGetPCC} \\
+			\ccode{__builtin_memcap_global_data_get} & \asm{CMove \%0, $v0} %stopzone\\
+			\midrule
+			\ccode{__builtin_cheri_cause.get} & \asm{CGetCause} \\
+			\ccode{__builtin_cheri_cause.set} & \asm{CSetCause} \\
+			\ccode{__builtin_cheri_invoke_data_cap_get} & \asm{CMove \%0, $c26} %stopzone\\
+			\ccode{__builtin_cheri_kernel_cap1_get} & \asm{CMove \%0, $c27} %stopzone\\
+			\ccode{__builtin_cheri_kernel_cap1_get} & \asm{CMove \%0, $c28} %stopzone\\
+			\ccode{__builtin_cheri_kernel_code_cap_get} & \asm{CMove \%0, $c29} %stopzone\\
+			\ccode{__builtin_cheri_kernel_data_cap_get} & \asm{CMove \%0, $c30} %stopzone\\
+			\ccode{__builtin_cheri_exception_program_counter_cap_get} & \asm{CMove \%0, $c31} %stopzone\\
+			\bottomrule
+		\end{tabu}
+		\caption{\label{tbl:builtins}C built-in functions provided for CHERI.}
+	\end{center}
+\end{table}
+
+
+
 \section{Predefined macros}
 
 CHERI Clang provides a number of feature test macros, shown in \autoref{tbl:featmacros}.
