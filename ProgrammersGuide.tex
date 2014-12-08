@@ -27,6 +27,14 @@
     stringstyle={\color{IndianRed}},
     tabsize=2
 }
+\lstdefinelanguage{llvm}
+{
+	morekeywords={private, constant, i8, i32, define, icmp, label, i64, call,
+	              void, ret, getelementptr, br, load, align, nounwind},
+	morekeywords={addrspace, inttoptr, ptrtoint, tail},
+	morecomment=[l];
+}%
+
 \lstnewenvironment{shortlisting}[1][]{
   \lstset{backgroundcolor=\color{white},
           numbers=none,
@@ -46,7 +54,7 @@
 \lstnewenvironment{irsnippet}[1][]{
   \lstset{backgroundcolor=\color{white},
           numbers=none,
-		  language={},
+		  language={llvm},
           basicstyle=\small\ttfamily}}{}
 
 
@@ -67,7 +75,7 @@
 
 \newcommand{\ccode}[1]{\lstinline[language={C}]|#1|}
 \newcommand{\asm}[1]{\lstinline[language={}]|#1|}
-\newcommand{\ir}[1]{\lstinline[language={}]|#1|}
+\newcommand{\ir}[1]{\lstinline[language={llvm}]|#1|}
 \newcommand{\file}[1]{\texttt{#1}}
 \newcommand{\flag}[1]{\texttt{#1}}
 \makeindex
