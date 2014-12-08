@@ -1,8 +1,8 @@
 all:
-	latexmk -pdf ProgrammersGuide
+	latexmk -pdf CompilerDoc
 
 preview:
-	latexmk -pdf -pvc ProgrammersGuide
+	latexmk -pdf -pvc CompilerDoc
 
 clean:
-	latexmk -pdf -c ProgrammersGuide
+	latexmk -pdf -c CompilerDoc
