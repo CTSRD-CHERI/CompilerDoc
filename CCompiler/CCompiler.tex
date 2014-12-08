@@ -200,14 +200,14 @@ Note that the \ccode{+} prefix is required to indicate that this is an output re
 
 \section{\file{memcap.h}}
 
-CHERI Clang includes a header, \file{memcap.h}, which can be included by code targeting any architecture and expses architecture-neutral definitions of types and functions for memory capabilities.
+CHERI Clang includes a header, \file{memcap.h}, which can be included by code targeting any architecture and exposes architecture-neutral definitions of types and functions for memory capabilities.
 
 The new types and qualifiers provided by the compiler all use identifiers that start with two underscores, because this part of the namespace is reserved for the language implementation and so should not conflict with any user code.
 The \file{memcap.h} header provides more human-friendly versions of these, including \ccode{intcap_t} and \ccode{uintcap_t} types, and the \ccode{capability} qualifier.
 On architectures that don't support capabilities, the two types will be equivalent to \ccode{intptr_t} and \ccode{uintptr_t} and the qualifier will be ignored.
 
 The header also provides versions of the \ccode{__builtin_memcap} functions, without the \ccode{__builtin_} prefix.
-The versions of these that are exposed when compiling without capability support are no-ops for the set varatiants and define maximum permissions and bounds for the get variants.
+The versions of these that are exposed when compiling without capability support are no-ops for the set variants and define maximum permissions and bounds for the get variants.
 
 Only the functions that are expected to be generic across all implementations of the CHERI model (as opposed to the MIPS-based concrete implementation) are exposed by this header.
 
