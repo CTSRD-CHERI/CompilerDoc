@@ -158,7 +158,7 @@ For example, \ccode{__CHERI_CAP_PERMISSION_PERMIT_SEAL__} is the permission bit 
 	\end{center}
 \end{table}
 
-\section{\ccode{__intcap_t}}
+\section{\texttt{\_\_intcap\_t}}
 
 CHERI provides two builtin types, \ccode{__intcap_t} and \ccode{__uintcap_t}.  These are expected to be \ccode{typedef}'d to \ccode{[u]intcap_t} in the compatible ABI and \ccode{[u]intptr_t} in the \sandboxABI.  These types are the same sizes as capabilities (i.e. \ccode{sizeof(__intcap_t) == sizeof(__capability void*)}).  
 
