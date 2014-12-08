@@ -167,7 +167,19 @@ As with \ccode{intptr_t} in conventional C code, the goal for these types is to 
 \index{null capability}
 When an integer value is cast to an \ccode{__intcap_t}, the compiler will set that integer as the offset of a canonical null capability.  Any arithmetic on an \ccode{__intcap_t} value is performed by extracting its offset, manipulating it, and then setting it.  This ensures that integer arithmetic on \ccode{__intcap_t} values derived from integers will work precisely as expected.  Arithmetic on values derived from pointers (capabilities) is a little bit more complex.  Masking to access the unused low and high bits should still work as expected, as should addition.  Multiplication and division, however, will not.
 
-Comparisons between \ccode{__intcap_t} values use special pointer comparison instructions.  These have the semantics that any untagged capability (including those derived from the null capability) will compare before those with a valid tag.  Within these two regions, capabilities are compared based on their absolute virtual addresses (i.e. base + offset).
+Comparisons between \ccode{__intcap_t} values use special pointer comparison instructions.
+These have the semantics that any untagged capability (including those derived from the null capability) will compare before those with a valid tag.
+Within these two regions, capabilities are compared based on their absolute virtual addresses (i.e. base + offset).
+Comparisons between signed and unsigned \ccode{__intcap_t} values will use the signed and unsigned variants of the compare instructions.
+
+\begin{notebox}{Pointer comparison and garbage collection}
+The C specification makes comparisons between pointers to different objects undefined.
+The CHERI C compiler aims to ensure that such comparison is stable and has the same result as pointer comparison with non-capability pointers.
+
+The fact that the CHERI model makes it possible to differentiate pointers from integers (even in the case of \ccode{__intcap_t}) means that it is possible to implement a copying garbage collector for CHERI C.
+The compiler aims to ensure that virtual addresses do not leak into integer registers unless the programmer explicitly requests them to (for example, casting a capability to an \ccode{int} or explicitly accessing the base).
+This means that, as long as care is taken, memory referenced by capabilities but outside of the global data capability range can be safely collected, unless the code relies on undefined behavior or explicitly attempts to subvert the garbage collector.
+\end{notebox}
 
 \section{Inline assembly}
 
