@@ -178,13 +178,13 @@ For example, to access the value in \creg{0}, you might write:
 \begin{csnippet}
 __capability void *c0;
 __asm__ __volatile__ ("cmove %0, $c0"
-	: "=C"(c0) /* c0 is a capability output operand */
+	: "+C"(c0) /* c0 is a capability output operand */
 	: /* No input operands */
 	: /* No clobbers */
 	);
 \end{csnippet}
 
-Note that the \ccode{=} prefix is required to indicate that this is an output register, for input operands \ccode{"C"} is correct.
+Note that the \ccode{+} prefix is required to indicate that this is an output register, for input operands \ccode{"C"} is correct.
 
 \section{\file{memcap.h}}
 
