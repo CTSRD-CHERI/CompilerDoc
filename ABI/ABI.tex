@@ -57,7 +57,9 @@ If it is overwritten by anything other than an executable capability, then the \
 \section{Calling conventions}
 
 When targeting the n64 ABI, the only changes to the calling convention are to support capability arguments.
+Capability arguments are passed in registers \creg{3} to \creg{10}, with \creg{3} also being used for capability return values.
 
+The normal rules for composite types apply: the portions that will fit within a register are passed in registers and the remainder is passed on the stack.
 
 \subsection{Variadic calls}
 
