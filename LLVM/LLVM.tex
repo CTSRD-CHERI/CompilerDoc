@@ -30,6 +30,21 @@ As a result, they will attempt to create \ir{i256} operands to various pointer a
 To avoid this, the \ccode{DataLayout} class now provides a few variants of \ccode{getPointerBaseSize()} methods, which get the size of the base of a fat pointer or capability.
 For non-capability pointer types, these simply return the size.
 
+\section{Alignment of types}
+
+Capabilities are \textit{always} naturally aligned.
+This is a requirement of the hardware (there is one tag bit per capability-sized line of memory).
+The back end will assume that all pointers to capabilities are correctly aligned and will emit code that will trap at run time if not.
+
+Capability-relative loads and stores have no equivalent of the MIPS \asm{lwl} and \asm{lwr} instructions for unaligned loads and stores.
+If capability-relative loads and stores have to be aligned, then this results in a very inefficient sequence of loads and shifts.
+This is unfortunate, because in most cases loads and stores \textit{are} naturally aligned, but the front end and mid-level optimizers lose the alignment information.
+This resulted in the back end emitting the inefficient sequence for all loads and stores.
+
+The MIPS back end now assumes that CHERI is able to support unaligned loads and stores of every type.
+A sufficient number of loads and stores are correctly aligned (but have lost the alignment information) that this is a speed win.
+On recent versions of CHERI1, unaligned loads and stores within a cache line are also supported in hardware, so the slow path (trapping to the OS) is not required.
+
 \section{SelectionDAG types}
 
 In LLVM, one of the early parts of the target-independent code generator replaces all pointers with an integer of the correct size.
