@@ -232,6 +232,59 @@ The compiler aims to ensure that virtual addresses do not leak into integer regi
 This means that, as long as care is taken, memory referenced by capabilities but outside of the global data capability range can be safely collected, unless the code relies on undefined behavior or explicitly attempts to subvert the garbage collector.
 \end{notebox}
 
+\section{Input and output}
+
+The CHERI capability model supports pointers with restricted rights.
+An early version of CHERI Clang used this to enforce \ccode{const} in hardware.
+This proved problematic, for example in idioms such as \ccode{strchr}:
+
+\begin{csnippet}
+char *strchr(const char *s, int c);
+\end{csnippet}
+
+This function returns a non-\ccode{const} pointer derived from a \ccode{const} pointer.
+The invariant that this intends to document is that the \ccode{strchr} function will not modify the buffer \ccode{s}.
+In the capability model, it is impossible to derive a writable capability from a read-only capability, which broke any caller of this function that expected the returned pointer to be writable.
+
+To address this, CHERI Clang provides an \ccode{__input} qualifier, which is similar to \ccode{const} but enforced in hardware.
+Capabilities can be implicitly cast to \ccode{__input}-qualified versions, including as function parameters, and the compiler will insert a \asm{CAndPerms} instruction to disclaim write permissions.
+
+A corresponding \ccode{__output} qualifier has similar behavior, creating a write-only capability.
+For example, consider the following simple snippet:
+
+\begin{csnippet}
+int in(__input __capability int *x);
+int out(__output __capability int *x);
+
+void inout(__capability int *x)
+{
+	in(x);
+	out(x);
+}
+\end{csnippet}
+
+The \ccode{inout} function will compile to the following LLVM IR:
+
+\begin{irsnippet}
+; Function Attrs: nounwind
+define void @inout(i32 addrspace(200)* %x) #0 {
+entry:
+	%0 = bitcast i32 addrspace(200)* %x to i8 addrspace(200)*
+	%1 = tail call i8 addrspace(200)* @llvm.mips.cap.perms.and(i8 addrspace(200)* %0, i64 65495)
+	%2 = bitcast i8 addrspace(200)* %1 to i32 addrspace(200)*
+	%call = tail call i32 @in(i32 addrspace(200)* %2) #3
+	%3 = tail call i8 addrspace(200)* @llvm.mips.cap.perms.and(i8 addrspace(200)* %0, i64 65515)
+	%4 = bitcast i8 addrspace(200)* %3 to i32 addrspace(200)*
+	%call1 = tail call i32 @out(i32 addrspace(200)* %4) #3
+	ret void
+}
+\end{irsnippet}
+
+The two intrinsic calls construct two capabilities derived from the original argument.
+The first removes the store and store-capability permissions.
+The second removes the load and load-capability permissions.
+This means that the \ccode{in} function can not use its argument to write memory and the \ccode{out} function can not use its argument to read memory.
+
 \section{Inline assembly}
 
 Clang supports GNU-style inline assembly.
