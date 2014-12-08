@@ -246,7 +246,7 @@ This contains two simple functions that are expected to be invoked as part of a 
 	clc     $c3, $zero, 0($c2)
 	daddiu  $2, $zero, 0
 	daddiu  $3, $zero, 0
-\end{asmsnippet}
+\end{asmsnippet}%stopzone
 
 The return value is loaded into \creg{3}.  The two integer return values are zeroed.  In the second function, one of the integer return registers is used, but the capability registers are not.  The compiler generates this code:
 
@@ -254,6 +254,6 @@ The return value is loaded into \creg{3}.  The two integer return values are zer
 	cfromptr  $c3, $c0, $zero
 	addiu     $2, $zero, 42
 	daddiu    $3, $zero, 0
-\end{asmsnippet}
+\end{asmsnippet}%stopzone
 
 In this case, the first integer return register is set to 42, but the other return registers are cleared.  
