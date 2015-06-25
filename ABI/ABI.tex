@@ -18,6 +18,7 @@ In the sandbox ABI, so is \creg{11} (the stack capability).
 			\headerrow
 			Register             & Compiler usage \\
 			\midrule
+			\reg{v0}             & Contains the method number for cross-domain calls.\\
 			\creg{0}             & Used implicitly for all non-capability memory accesses.\\
 			\creg{1}--\creg{16}  & Used for arguments in the ``fast'' calling convention. \\
 			\creg{1}--\creg{2}   & Code and data capability arguments with the ``ccall'' calling convention. \\
@@ -76,7 +77,7 @@ The alignment requirements can result in large gaps in the variadic argument lis
 
 \section{Cross-domain calls: ``ccall''}
 
-The \ir{chericcallcc} calling convention uses registers \creg{1} and \creg{2} for the first two capability arguments.
+The \ir{chericcallcc} calling convention uses registers \creg{1} and \creg{2} for the first two capability arguments and \reg{v0} for the method number.
 The front end will lower \ccode{struct}s that fit in registers to a sequence of scalars, so this is typically generated from a two-capability \ccode{struct}.
 The remaining arguments are in the same place as the normal calling convention, allowing a simple jump to tail call functions that do not care about these arguments.
 

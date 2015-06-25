@@ -84,6 +84,7 @@ For example, all of the accessors for the special registers will move the value 
 			\midrule
 			\ir{llvm.mips.cap.length.set} & \asm{CSetLen} \\
 			\ir{llvm.mips.cap.length.get} & \asm{CGetLen} \\
+			\ir{llvm.mips.cap.bounds.set} & \asm{CSetBounds} \\
 			\ir{llvm.mips.cap.base.increment} & \asm{CIncBase} \\
 			\ir{llvm.mips.cap.base.get} & \asm{CGetBase} \\
 			\ir{llvm.mips.cap.perms.and} & \asm{CAndPerm} \\
@@ -101,6 +102,7 @@ For example, all of the accessors for the special registers will move the value 
 			\ir{llvm.mips.cap.offset.set} & \asm{CSetOffset} \\
 			\ir{llvm.mips.cap.offset.get} & \asm{CGetOffset} \\
 			\ir{llvm.mips.cap.base.only.increment} & \asm{CIncBase2} \\
+			\ir{llvm.mips.stack.cap.get} & \asm{CMove \%0, $c11} \\
 			\midrule
 			\ir{llvm.mips.cap.cause.get} & \asm{CGetCause} \\
 			\ir{llvm.mips.cap.cause.set} & \asm{CSetCause} \\

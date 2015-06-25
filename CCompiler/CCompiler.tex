@@ -119,6 +119,7 @@ The remainder (those with \ccode{cheri} in their name) are specific to the curre
 			\midrule
 			\ccode{__builtin_memcap_length_set} & \asm{CSetLen} \\
 			\ccode{__builtin_memcap_length_get} & \asm{CGetLen} \\
+			\ccode{__builtin_memcap_bounds_set} & \asm{CSetBounds} \\
 			\ccode{__builtin_memcap_base_increment} & \asm{CIncBase} \\
 			\ccode{__builtin_memcap_base_get} & \asm{CGetBase} \\
 			\ccode{__builtin_memcap_perms_and} & \asm{CAndPerm} \\
@@ -137,7 +138,8 @@ The remainder (those with \ccode{cheri} in their name) are specific to the curre
 			\ccode{__builtin_memcap_offset_get} & \asm{CGetOffset} \\
 			\ccode{__builtin_memcap_base_only_increment} & \asm{CIncBase2} \\
 			\ccode{__builtin_memcap_program_counter_get} & \asm{CGetPCC} \\
-			\ccode{__builtin_memcap_global_data_get} & \asm{CMove \%0, $v0} \\ %stopzone
+			\ccode{__builtin_memcap_global_data_get} & \asm{CMove \%0, $c0} \\ %stopzone
+			\ccode{__builtin_memcap_stack_get} & \asm{CMove \%0, $c11} \\ %stopzone
 			\midrule
 			\ccode{__builtin_cheri_cause.get} & \asm{CGetCause} \\
 			\ccode{__builtin_cheri_cause.set} & \asm{CSetCause} \\
@@ -321,25 +323,30 @@ Only the functions that are expected to be generic across all implementations of
 
 It is important to avoid leaking rights (and other information) when calling between security contexts.  CHERI implements cross-domain calls via a special instruction (\asm{ccall}) that traps to the kernel to perform the domain transition.  The kernel is responsible for saving and zeroing all callee-save registers and clearing all caller-save registers.  On return, the same code in the kernel will restore all callee-save registers and (again) zero caller-save registers.
 
-The kernel does not know precisely what the arguments are for any function that is involved in a cross-domain call and so can not clear the unused argument registers on call, nor the unused return registers on return.  If a function is annotated with \ccode{__attribute__((cheri_ccall))} then the compiler will do this.  
+The kernel does not know precisely what the arguments are for any function that is involved in a cross-domain call and so can not clear the unused argument registers on call, nor the unused return registers on return.
 
-Functions with this calling convention have two extra capability argument registers, \creg{1} and \creg{2}, which contain the code and data capabilities.  Consider the following simple program:
+On the other side of the cross-domain call, the code must determine which method to invoke.  This is done by means of a method number, which is passed in a register that is normally unused for calls.
+
+If a function is annotated with \ccode{__attribute__((cheri_ccall))} then the front end will replace calls to it with specially crafted calls to \ccode{cheriinvoke}, with the method number (identified by a global variable that is initialised by the sandbox loader) in the correct register.
+This annotation provides two declarations of the function, one with a suffix (specified by the \ccode{cheri_method_suffix} attribute) that takes an explicit CHERI class argument and one that automatically sets the class (code and data capability) arguments from a global variable specified by the \ccode{cheri_method_class} attribute.
+
+Functions with the \ccode{cheri_ccallee} attribute will use the ccall calling convention, and so the compiler will zero any return registers.  This is intended to allow functions to be declared that are usable both inside and between compartments.
+
+Functions with the ccall calling convention have two extra capability argument registers, \creg{1} and \creg{2}, which contain the code and data capabilities.  
+They also have an extra integer argument register (\reg{v0}), which contains the method number.  These are not exposed to functions marked as using the ccallee calling convention, which accept the normal calling convention's argument registers.  
+
+Consider the following simple program:
 
 \begin{csnippet}
-typedef struct
+__capability void *data;
+__attribute__((cheri_ccallee))
+__capability void *cgetdata(void)
 {
-	__capability void *code;
-	__capability void *__capability*data;
-} cobj;
-
-__attribute__((cheri_ccall))
-__capability void *cgetdata(cobj c)
-{
-	return *c.data;
+	return data;
 }
 
-__attribute__((cheri_ccall))
-int cgetnumber(cobj c)
+__attribute__((cheri_ccallee))
+int cgetnumber(void)
 {
 	return 42;
 }
@@ -349,8 +356,8 @@ This contains two simple functions that are expected to be invoked as part of a 
 
 \begin{asmsnippet}
 	clc     $c3, $zero, 0($c2)
-	daddiu  $2, $zero, 0
-	daddiu  $3, $zero, 0
+	move    $2, $zero
+	move    $3, $zero
 \end{asmsnippet}%stopzone
 
 The return value is loaded into \creg{3}.  The two integer return values are zeroed.  In the second function, one of the integer return registers is used, but the capability registers are not.  The compiler generates this code:
@@ -358,7 +365,7 @@ The return value is loaded into \creg{3}.  The two integer return values are zer
 \begin{asmsnippet}
 	cfromptr  $c3, $c0, $zero
 	addiu     $2, $zero, 42
-	daddiu    $3, $zero, 0
+	move      $3, $zero
 \end{asmsnippet}%stopzone
 
 In this case, the first integer return register is set to 42, but the other return registers are cleared.  
