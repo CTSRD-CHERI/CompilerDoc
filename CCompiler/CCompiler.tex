@@ -127,7 +127,7 @@ The remainder (those with \ccode{cheri} in their name) are specific to the curre
 			\ccode{__builtin_memcap_type_set} & \asm{CSetType} \\
 			\ccode{__builtin_memcap_type_get} & \asm{CGetType} \\
 			\ccode{__builtin_memcap_tag_get } & \asm{CGetTag} \\
-			\ccode{__builtin_memcap_unsealed_get } & \asm{CGetUnsealed} \\
+			\ccode{__builtin_memcap_sealed_get } & \asm{CGetSealed} \\
 			\ccode{__builtin_memcap_tag_clear } & \asm{CClearTag} \\
 			\ccode{__builtin_memcap_seal} & \asm{CSeal} \\
 			\ccode{__builtin_memcap_unseal } & \asm{CUnseal} \\
@@ -136,7 +136,6 @@ The remainder (those with \ccode{cheri} in their name) are specific to the curre
 			\ccode{__builtin_memcap_offset_increment} & \asm{CIncOffset} \\
 			\ccode{__builtin_memcap_offset_set} & \asm{CSetOffset} \\
 			\ccode{__builtin_memcap_offset_get} & \asm{CGetOffset} \\
-			\ccode{__builtin_memcap_base_only_increment} & \asm{CIncBase2} \\
 			\ccode{__builtin_memcap_program_counter_get} & \asm{CGetPCC} \\
 			\ccode{__builtin_memcap_global_data_get} & \asm{CMove \%0, $c0} \\ %stopzone
 			\ccode{__builtin_memcap_stack_get} & \asm{CMove \%0, $c11} \\ %stopzone

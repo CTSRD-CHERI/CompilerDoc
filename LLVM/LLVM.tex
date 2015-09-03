@@ -92,7 +92,7 @@ For example, all of the accessors for the special registers will move the value 
 			\ir{llvm.mips.cap.type.set} & \asm{CSetType} \\
 			\ir{llvm.mips.cap.type.get} & \asm{CGetType} \\
 			\ir{llvm.mips.cap.tag.get } & \asm{CGetTag} \\
-			\ir{llvm.mips.cap.unsealed.get } & \asm{CGetUnsealed} \\
+			\ir{llvm.mips.cap.sealed.get } & \asm{CGetSealed} \\
 			\ir{llvm.mips.cap.tag.clear } & \asm{CClearTag} \\
 			\ir{llvm.mips.cap.seal} & \asm{CSeal} \\
 			\ir{llvm.mips.cap.unseal } & \asm{CUnseal} \\
@@ -101,7 +101,6 @@ For example, all of the accessors for the special registers will move the value 
 			\ir{llvm.mips.cap.offset.increment} & \asm{CIncOffset} \\
 			\ir{llvm.mips.cap.offset.set} & \asm{CSetOffset} \\
 			\ir{llvm.mips.cap.offset.get} & \asm{CGetOffset} \\
-			\ir{llvm.mips.cap.base.only.increment} & \asm{CIncBase2} \\
 			\ir{llvm.mips.stack.cap.get} & \asm{CMove \%0, $c11} \\
 			\midrule
 			\ir{llvm.mips.cap.cause.get} & \asm{CGetCause} \\
