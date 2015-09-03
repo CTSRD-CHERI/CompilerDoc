@@ -94,3 +94,84 @@ The code that will be generated is described in \autoref{sec:cccall}.
 The compiler assumes that the runtime environment (library or kernel code) is responsible for preserving or zeroing all non-argument registers across security domain transitions.
 The code to do this is the same for all functions and so having only a single instance provides better cache utilization.
 
+\section{Global initialization}
+
+\index{global initializers}
+Capabilities in globals require special handling.
+Capabilities can not be statically defined in the binary as other data, because doing so will not set the tag.
+Similarly, existing relocation types are not sufficient to describe a capability, which has a base, bounds, and permissions in addition to the location described by conventional pointers.
+
+\begin{notebox}{Dynamic initialization}
+The initial implementation in clang simply emitted C++-style dynamic initialization code for all globals that contained non-null pointer values in the constant initializer.
+This is still the default, though this will change soon and can be disabled with the \flag{-Xclang -cheri-linker} flag.
+\end{notebox}
+
+The LLVM back end will emit a special section in the ELF binary for these initializers.
+This section contains one entry for each capability that must be initialized at program launch.
+For example, consider the following program fragment:
+\begin{csnippet}
+extern int a[5];
+int *b[] = {&a[2], &a[1], a};
+\end{csnippet}
+
+This compiles to the following assembly:
+
+\begin{asmsnippet}
+b:
+$tmp0:
+	.space	32
+$tmp1:
+	.space	32
+$tmp2:
+	.space	32
+	.size	b, 96
+	.section	__cap_relocs,"",@progbits
+	.8byte	($tmp0)
+	.8byte	a
+	.8byte	8
+	.space	16
+	.8byte	($tmp1)
+	.8byte	a
+	.8byte	4
+	.space	16
+	.8byte	($tmp2)
+	.8byte	a
+	.space	8
+	.space	16
+\end{asmsnippet}
+
+The \asm{__cap_relocs} section contains three entries, one for each capability that must be initialized (corresponding to the three elements of \ccode{b}).
+The compiler emits three 64-bit entries, and leaves two blank.
+These are:
+\begin{enumerate}
+	\item The location of the capability that must be created (i.e. \ccode{b[0]} to \ccode{b[2]}.
+	\item The location of the base of the object that is the target.
+	\item The offset within that object.
+	\item The size of the object.
+	\item The permissions that the capability should have.
+\end{enumerate}
+
+In this example, the size is not known because the object is defined in another compilation unit.
+After linking, we can run the \tool{fixlinks} tool, which will inspect the size of symbols and fill in the size field.
+
+You can check wither this has worked by using the \flag{-C} flag to \tool{llvm-objdump}:
+
+\begin{verbatim}
+$ llvm-objdump -C a.out
+
+a.out:	file format ELF64-mips
+
+CAPABILITY RELOCATION RECORDS:
+0x000000000000a7a0	Base: a (0x000000000000a700)	Offset: 0000000000000008	Length: 0000000000000020
+0x000000000000a7c0	Base: a (0x000000000000a700)	Offset: 0000000000000004	Length: 0000000000000020
+0x000000000000a7e0	Base: a (0x000000000000a700)	Offset: 0000000000000000	Length: 0000000000000020
+\end{verbatim}
+
+There are currently some significant limitations:
+
+\begin{itemize}
+	\item We should have a flag to indicate whether this is a code (executable) or data capability, to indicate whether it should be derived from \reg{pcc} or \reg{gdc}.
+	\item We have no way of enforcing permissions (for example, the \ccode{__output} or \ccode{__input} qualifier on pointers).
+	\item Dynamically linked binaries will need the run-time linker to provide the symbol sizes.
+\end{itemize}
+
