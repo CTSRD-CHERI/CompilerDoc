@@ -51,7 +51,7 @@ This has two effects.
 The first is that \reg{t9} can no longer be used as a cheap way of getting the program counter for position-independent code.
 Instead, if this value is needed, the compiler will emit \asm{CGetOffset $t9,$c12}, setting \reg{t9} to the \reg{pcc}-relative address of the program counter on function entry.
 
-The second effect is that the return can be emitted as \asm{cjr $c17}.
+The second effect is that the return can be emitted as \asm{cjr $c17}.%stopzone
 If \creg{17} is spilled to the stack, then it is protected by its tag bit.
 If it is overwritten by anything other than an executable capability, then the \asm{cjr} instruction will trap.
 
