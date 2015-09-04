@@ -175,3 +175,23 @@ There are currently some significant limitations:
 	\item Dynamically linked binaries will need the run-time linker to provide the symbol sizes.
 \end{itemize}
 
+\section{Return address protection}
+
+RISC architectures typically provide a jump instruction that puts the return address in another register (e.g. \asm{jalr} on MIPS, \asm{bl[x]} on ARM).
+If the called function calls another function, it must spill the return address to the stack, where it can be reloaded later.
+This happens automatically on x86, where the \asm{call} and \asm{ret} instructions store the return address on the stack and read it from the stack, respectively.
+
+If a buffer overflow allows the return address to be overwritten, then an attacker can control exactly where execution will continue after the return.
+
+\index{CFI}\index{return address}
+In the sandbox ABI, this kind of attack is very difficult.
+Calls use the \asm{cjalr} instruction, so the return address is a \reg{pcc}-relative capability.
+If this is overwritten with something that is not a capability, then the return will trigger a tag violation.
+If this is overwritten by a non-executable capability, then the return will trigger a permissions violation.
+For a successful exploit, the attacker would have to find an executable capability (e.g. a function pointer or a previous return address) that the program could be tricked into writing over the return address.
+
+We would like to be able to provide the same benefits to the existing ABI.
+We achieve this by keeping the call sequence the same, but modifying the return sequence.
+In all non-leaf functions, when we spill the return address to the stack we also spill a \keyword{return capability}: \reg{pcc} with its offset set to the return address.
+This can then be used with \asm{cjr} to return.
+Note that we still spill the return address, even though it is not used, because other tools (debugging tools and so on) sometimes rely on the position of the return address on the stack.
