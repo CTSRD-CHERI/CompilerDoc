@@ -90,9 +90,56 @@ In the callee, it will zero unused return registers.
 	The CHERIBSD trampoline code in the kernel also makes this assumption, but it will need revisiting once floating point is enabled.
 \end{notebox}
 
-The code that will be generated is described in \autoref{sec:cccall}.
+The attributes for generating this code are described in \autoref{sec:cccall}.
 The compiler assumes that the runtime environment (library or kernel code) is responsible for preserving or zeroing all non-argument registers across security domain transitions.
 The code to do this is the same for all functions and so having only a single instance provides better cache utilization.
+
+The compiler generates two special sections containing metadata about cross-domain calls.
+\index{\_\_cheri\_sandbox\_required\_methods section}
+\asm{__cheri_sandbox_required_methods} contains metadata about methods that are required by the binary.
+\index{\_\_cheri\_sandbox\_provided\_methods}
+\asm{__cheri_sandbox_provided_methods} contains metadata about methods that are provided by this binary.
+These are used by the \file{libcheri}\index{libcheri} runtime, to make method numbers in the caller and callee of cross-domain calls match.
+
+For each method that is defined in the binary, the \asm{__cheri_sandbox_provided_methods} section will contain an instance of the following structure:
+
+\begin{csnippet}
+struct sandbox_provided_method
+{
+	int64_t   flags;
+	char     *class;
+	char     *method;
+	void     *method_ptr;
+};
+\end{csnippet}
+
+The \ccode{flags} field is currently always 0 and is reserved to permit future modifications to this structure without breaking compatibility.
+The \ccode{class} field points to the name of the class for which the method is provided.
+The \ccode{method} field points to the name of the method.
+The \ccode{method_ptr} field is a \reg{pcc}-relative address of the method.
+
+Similarly, for each required method the compiler will emit a structure of the following form in the \asm{__cheri_sandbox_required_methods} section:
+
+\begin{csnippet}
+struct sandbox_required_method
+{
+	int64_t   flags;
+	char     *class;
+	char     *method;
+	int64_t  *method_number_var;
+	int64_t   method_number;
+};
+\end{csnippet}
+
+Multiple compilation units in the same binary may require the same method, so each of these structures is emitted as a single \keyword{comdat}, to allow merging.
+Older versions of the cross-domain call ABI put the method numbers in a separate section and required the runtime library to walk the ELF symbol table.
+The current structure is a hybrid, with the \ccode{method_number_var} field containing the address of that global, allowing code to be compiled and used with old and new versions of the runtime library.
+
+The \ccode{flags} field is used by the runtime to indicate that a method has been resolved.
+It will also be used in a future version to indicate that the \ccode{method_number_var} field has been omitted and that the generated code expects the \ccode{method_number} field to contain the authoritative version of the method number.
+The top 32 bits of the \ccode{flags} field are reserved for use by the runtime, the low 32 bits for use by the compiler.
+
+The \ccode{class} and \ccode{method} fields contain the names of the class and method, respectively.
 
 \section{Global initialization}
 
@@ -140,6 +187,7 @@ $tmp2:
 	.space	16
 \end{asmsnippet}
 
+\index{\_\_cap\_relocs section}
 The \asm{__cap_relocs} section contains three entries, one for each capability that must be initialized (corresponding to the three elements of \ccode{b}).
 The compiler emits three 64-bit entries, and leaves two blank.
 These are:
