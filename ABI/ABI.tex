@@ -182,11 +182,11 @@ The \ccode{permissions} field contains the permissions that the capability shoul
 
 For the above example, the compiler will emit three structures, with the following values:
 
-\begin{ccode}
+\begin{csnippet}
 	{ &b[0], &a, 8, 0, 0},
 	{ &b[1], &a, 4, 0, 0},
 	{ &b[2], &a, 0, 0, 0}
-\end{ccode}
+\end{csnippet}
 
 The compiler does not know the size of the object and so will set the size to 0.
 After linking, the ELF file will contain the size of the symbol.
