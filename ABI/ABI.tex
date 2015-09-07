@@ -161,46 +161,40 @@ extern int a[5];
 int *b[] = {&a[2], &a[1], a};
 \end{csnippet}
 
-This compiles to the following assembly:
+The resulting binary will contain a \asm{__cap_relocs}\index{\_\_cap\_relocs section} section with three instances of the following structure:
 
-\begin{asmsnippet}
-b:
-$tmp0:
-	.space	32
-$tmp1:
-	.space	32
-$tmp2:
-	.space	32
-	.size	b, 96
-	.section	__cap_relocs,"",@progbits
-	.8byte	($tmp0)
-	.8byte	a
-	.8byte	8
-	.space	16
-	.8byte	($tmp1)
-	.8byte	a
-	.8byte	4
-	.space	16
-	.8byte	($tmp2)
-	.8byte	a
-	.space	8
-	.space	16
-\end{asmsnippet}
+\begin{csnippet}
+struct capreloc
+{
+	void *__capability capability_location;
+	void              *object;
+	uint64_t           offset;
+	uint64_t           size;
+	uint64_t           permissions;
+};
+\end{csnippet}
 
-\index{\_\_cap\_relocs section}
-The \asm{__cap_relocs} section contains three entries, one for each capability that must be initialized (corresponding to the three elements of \ccode{b}).
-The compiler emits three 64-bit entries, and leaves two blank.
-These are:
-\begin{enumerate}
-	\item The location of the capability that must be created (i.e. \ccode{b[0]} to \ccode{b[2]}.
-	\item The location of the base of the object that is the target.
-	\item The offset within that object.
-	\item The size of the object.
-	\item The permissions that the capability should have.
-\end{enumerate}
+The \ccode{capability_location} field contains the (relative) address of the capability that must be initialised at run time.
+The \ccode{object} field contains an address (and associated relocations) of the object that the capability refers to.
+The \ccode{offset} field contains the offset within this object.
+The \ccode{size} field contains the size of the underlying object.
+The \ccode{permissions} field contains the permissions that the capability should have and reserves space for other flags.
 
-In this example, the size is not known because the object is defined in another compilation unit.
-After linking, we can run the \tool{fixlinks} tool, which will inspect the size of symbols and fill in the size field.
+For the above example, the compiler will emit three structures, with the following values:
+
+\begin{ccode}
+	{ &b[0], &a, 8, 0, 0},
+	{ &b[1], &a, 4, 0, 0},
+	{ &b[2], &a, 0, 0, 0}
+\end{ccode}
+
+The compiler does not know the size of the object and so will set the size to 0.
+After linking, the ELF file will contain the size of the symbol.
+A capability-aware linker would then fill in the size field.
+In the absence of such a linker, the \tool{fixcapsize} tool will set the size.
+
+Currently, the permissions field is always 0.
+Future versions will indicate in this field whether the capability is relative to \reg{gdc} or \reg{pcc} and what permissions it should have.
 
 You can check wither this has worked by using the \flag{-C} flag to \tool{llvm-objdump}:
 
