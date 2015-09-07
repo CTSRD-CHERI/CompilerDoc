@@ -320,9 +320,10 @@ Only the functions that are expected to be generic across all implementations of
 \section{Compiler assistance for cross-domain calls}
 \label{sec:cccall}
 
-It is important to avoid leaking rights (and other information) when calling between security contexts.  CHERI implements cross-domain calls via a special instruction (\asm{ccall}) that traps to the kernel to perform the domain transition.  The kernel is responsible for saving and zeroing all callee-save registers and clearing all caller-save registers.  On return, the same code in the kernel will restore all callee-save registers and (again) zero caller-save registers.
+\index{ccall}\index{cross-domain call}
+It is important to avoid leaking rights (and other information) when calling between security contexts.  CHERI implements cross-domain calls via a special instruction (\asm{ccall}) that traps to a privileged handler (currently in the kernel) to perform the domain transition.  The handler is responsible for saving and zeroing all callee-save registers and clearing all caller-save registers.  On return, the same code in the handler will restore all callee-save registers and (again) zero caller-save registers.
 
-The kernel does not know precisely what the arguments are for any function that is involved in a cross-domain call and so can not clear the unused argument registers on call, nor the unused return registers on return.
+The handler does not know precisely what the arguments are for any function that is involved in a cross-domain call and so can not clear the unused argument registers on call, nor the unused return registers on return.
 
 On the other side of the cross-domain call, the code must determine which method to invoke.  This is done by means of a method number, which is passed in a register that is normally unused for calls.
 
