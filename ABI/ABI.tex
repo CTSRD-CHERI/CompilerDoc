@@ -26,6 +26,7 @@ In the sandbox ABI, so is \creg{11} (the stack capability).
 			\creg{3}--\creg{10}  & Capability arguments (caller-save). \\
 			\creg{11}            & Stack capability (sandbox ABI). \\
 			\creg{12}            & Used with \asm{cjalr} as the destination register (sandbox ABI). \\
+			\creg{13}            & Capability to on-stack arguments (variadic functions only). \\
 			\creg{11}--\creg{15} & Temporary (caller-save) registers.\\
 			\creg{17}            & Capability link register used with \asm{cjalr} (sandbox ABI).\\
 			\creg{16}--\creg{24} & Saved (callee-save) registers. \\
@@ -71,9 +72,17 @@ To fix them, we will have to ensure that all arguments after the first capabilit
 
 \index{sandbox ABI!variadic functions}
 In the sandbox ABI, \textit{all} variadic arguments are passed on the stack, with their natural alignment (non-variadic arguments to variadic functions are passed in registers or on the stack as the normal calling convention would dictate).
-The \ccode{va_list} is simply a pointer to the first (on-stack) variadic argument and \ccode{va_arg} calls simply ensure correct alignment, load from the pointer, and increment it past the value.
-The alignment requirements can result in large gaps in the variadic argument list.
 
+The \reg{c13} register holds a capability to the on-stack arguments.
+The \ccode{va_start} function copies the value that was stored in \reg{c13} on entry to the function.
+
+The \ccode{va_list} is a capability to the (on-stack) variadic arguments and \ccode{va_arg} calls ensure correct alignment, load from the capability, and increment its offset past the value.
+The alignment requirements can result in large gaps in the variadic argument list if integer and capability arguments are interleaved.
+
+\begin{notebox}{General usage}
+	Being able to find the range of on-stack arguments can be useful in the general case, so it may be a good idea to extend the non-variadic ABI to store the range of on-stack arguments in a capability in the same way.
+	This would require that all functions that do not pass values on the stack zero \reg{c13}, but that is a relatively small overhead.
+\end{notebox}
 
 \section{Cross-domain calls: ``ccall''}
 
