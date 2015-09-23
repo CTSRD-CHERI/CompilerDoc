@@ -35,6 +35,15 @@ __capability void *b; // 256-bit capability interpreted as a pointer
 Implicit casts between capability and integer pointers are not permitted.
 This is an intentional design decision, as such casts require careful thought to ensure that they are valid.
 
+Clang exposes a feature-test macro that allows you to easily check whether you're compiling for a target that supports capabilities and to \ccode{#define}-way the \ccode{__capability} qualifier for other platforms:
+
+\begin{csnippet}
+	#if !__has_feature(capabilities) && !defined(__capability)
+	#   define __capability
+	#endif
+\end{csnippet}
+
+
 \section{Pragmas for generating capabilities}
 
 \index{pointer\_interpretation pragma}
