@@ -16,7 +16,7 @@ If you have the cross-compiler from the SDK, then it will automatically have its
 \section{The \sandboxABI}
 
 \index{\sandboxABI{}}
-You can select the \sandboxABI{} by passing \flag{-mabi=sandbox} to clang.  When compiling in this mode, \textit{all} pointers will be represented as capabilities.\footnote{With the current exception of function pointers.}
+You can select the \sandboxABI{} by passing \flag{-mabi=sandbox} to clang.  When compiling in this mode, \textit{all} pointers (including function pointers) will be represented as capabilities.
 
 The compiler will infer the size of all stack allocations automatically and expects memory allocators to set the size appropriately for their allocations.
 
