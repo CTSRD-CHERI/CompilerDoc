@@ -1,15 +1,15 @@
 \chapter{The CHERI ABIs}
 \label{chp:abis}
 
-The CHERI compiler supports two ABIs, an extended version of the MIPS n64 ABI and the ``sandbox'' ABI where every pointer is a capability.
-The sandbox ABI is intended to evolve to a point where \creg{0} is never used.
+The CHERI compiler supports two ABIs, an extended version of the MIPS n64 ABI and the \sandboxABI{} where every pointer is a capability.
+The \sandboxABI{} is intended to evolve to a point where \creg{0} is never used.
 Currently, \creg{0} is used for globals, but not for any other data accesses.
 
 \section{Register usage}
 
 The compiler's use of capability registers is summarized in \autoref{tbl:reguse}.
 Registers \creg{16}--\creg{24} are preserved across calls, as is \creg{0}, which is never modified by the compiler.
-In the sandbox ABI, so is \creg{11} (the stack capability).
+In the \sandboxABI{}, so is \creg{11} (the stack capability).
 
 \begin{table}
 	\begin{center}
@@ -24,11 +24,11 @@ In the sandbox ABI, so is \creg{11} (the stack capability).
 			\creg{1}--\creg{2}   & Code and data capability arguments with the ``ccall'' calling convention. \\
 			\creg{3}             & Capability return value. \\
 			\creg{3}--\creg{10}  & Capability arguments (caller-save). \\
-			\creg{11}            & Stack capability (sandbox ABI). \\
-			\creg{12}            & Used with \asm{cjalr} as the destination register (sandbox ABI). \\
+			\creg{11}            & Stack capability (\sandboxABI{}). \\
+			\creg{12}            & Used with \asm{cjalr} as the destination register (\sandboxABI{}). \\
 			\creg{13}            & Capability to on-stack arguments (variadic functions only). \\
 			\creg{11}--\creg{15} & Temporary (caller-save) registers.\\
-			\creg{17}            & Capability link register used with \asm{cjalr} (sandbox ABI).\\
+			\creg{17}            & Capability link register used with \asm{cjalr} (\sandboxABI{}).\\
 			\creg{16}--\creg{24} & Saved (callee-save) registers. \\
 			\creg{25}--\creg{31} & Not used by the compiler.\\
 			\bottomrule
@@ -37,17 +37,17 @@ In the sandbox ABI, so is \creg{11} (the stack capability).
 	\end{center}
 \end{table}
 
-\subsection{The sandbox ABI}
+\subsection{The \sandboxABI{}}
 
-The sandbox ABI uses \creg{11} as a stack capability.
+The \sandboxABI{} uses \creg{11} as a stack capability.
 The \reg{sp} and \reg{fp} registers contain offsets in the stack capability.
 It would make sense to replace \reg{sp} with the offset in \creg{11}.
-This would simplify the addressing modes for the stack and make a lot of spills cheaper in the sandbox ABI.
+This would simplify the addressing modes for the stack and make a lot of spills cheaper in the \sandboxABI{}.
 
 \dcnote{Currently only true for the capcall branch, but will be merged Real Soon Now™}
-The sandbox ABI uses the capability mechanism to protect the return address.
+The \sandboxABI{} uses the capability mechanism to protect the return address.
 In the MIPS ABI, function calls are implemented as \asm{jalr $t9, $ra}.
-In the sandbox ABI, they are \asm{cjalr $c12, $c17}.
+In the \sandboxABI{}, they are \asm{cjalr $c12, $c17}.
 This has two effects.
 The first is that \reg{t9} can no longer be used as a cheap way of getting the program counter for position-independent code.
 Instead, if this value is needed, the compiler will emit \asm{CGetOffset $t9,$c12}, setting \reg{t9} to the \reg{pcc}-relative address of the program counter on function entry.
@@ -70,8 +70,8 @@ When a \ccode{va_list} is constructed, the 8 integer values are written out.
 This means that capability arguments in variadic functions are very difficult to support and are currently not expected to work.
 To fix them, we will have to ensure that all arguments after the first capability argument are passed on the stack and that the first capability argument has a mechanism for knowing whether it is in the first 64 bytes of the \ccode{va_list} (and, if so, incrementing the pointer until it's at the end).
 
-\index{sandbox ABI!variadic functions}
-In the sandbox ABI, \textit{all} variadic arguments are passed on the stack, with their natural alignment (non-variadic arguments to variadic functions are passed in registers or on the stack as the normal calling convention would dictate).
+\index{\sandboxABI{}!variadic functions}
+In the \sandboxABI{}, \textit{all} variadic arguments are passed on the stack, with their natural alignment (non-variadic arguments to variadic functions are passed in registers or on the stack as the normal calling convention would dictate).
 
 The \reg{c13} register holds a capability to the on-stack arguments.
 The \ccode{va_start} function copies the value that was stored in \reg{c13} on entry to the function.
@@ -235,7 +235,7 @@ This happens automatically on x86, where the \asm{call} and \asm{ret} instructio
 If a buffer overflow allows the return address to be overwritten, then an attacker can control exactly where execution will continue after the return.
 
 \index{CFI}\index{return address}
-In the sandbox ABI, this kind of attack is very difficult.
+In the \sandboxABI{}, this kind of attack is very difficult.
 Calls use the \asm{cjalr} instruction, so the return address is a \reg{pcc}-relative capability.
 If this is overwritten with something that is not a capability, then the return will trigger a tag violation.
 If this is overwritten by a non-executable capability, then the return will trigger a permissions violation.
