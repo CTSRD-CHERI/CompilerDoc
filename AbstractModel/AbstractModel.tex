@@ -19,6 +19,12 @@ The offset, as previously mentioned, is exempt from the monotonic property.  It 
 
 One important property of C is the existence of types such as \ccode{intptr_t}, that can store either a pointer or an integer and can be operated on as if they were integers.  Integers can be stored in capabilities using the offset: a null capability grants no rights, but can have an offset anywhere in the virtual address space.  The offset can therefore be used to store integer values.
 
+\index{intmax\_t type}
+The current implementation defines \ccode{intmax_t} to be \ccode{long}.
+This is allowed by the C specification, as the requirement for \ccode{intmax_t} is that it must have a \textit{range} equal to the largest integer, not a \textit{size}.
+We believe that this is likely to cause fewer problems in porting code, as most uses of \ccode{intmax_t} are for storing integer, not pointer, values.
+
+
 \section{The different ABIs}
 
 Incremental adoption is one of the goals of CHERI.  All existing unmodified binaries for the base architecture are expected to work.  More importantly, it should be possible to run unmodified programs with modified libraries and vice versa.
