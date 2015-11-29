@@ -45,7 +45,6 @@ The \reg{sp} and \reg{fp} registers contain offsets in the stack capability.
 It would make sense to replace \reg{sp} with the offset in \creg{11}.
 This would simplify the addressing modes for the stack and make a lot of spills cheaper in the \sandboxABI{}.
 
-\dcnote{Currently only true for the capcall branch, but will be merged Real Soon Now™}
 The \sandboxABI{} uses the capability mechanism to protect the return address.
 In the MIPS ABI, function calls are implemented as \asm{jalr $t9, $ra}.
 In the \sandboxABI{}, they are \asm{cjalr $c12, $c17}.
