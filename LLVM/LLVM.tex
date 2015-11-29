@@ -1,4 +1,5 @@
 \chapter{LLVM implementation}
+\label{chap:llvm-implementation}
 
 The changes in LLVM can be roughly split into two components: those specific to the MIPS back end and those in generic code.
 The MIPS back end changes are specific to the current CHERI implementation.
@@ -16,7 +17,7 @@ We assume that other architectures providing support for memory capabilities wou
 
 To support the \sandboxABI{}, the data layout string is modified to define the address space for \ir{alloca} instructions.
 It's assumed that, within a compilation unit, every \ir{alloca} returns a pointer in the same address space.
-By default, this is address space 0, but when targeting the sandbox ABI it is set to 200.
+By default, this is address space 0, but when targeting the \sandboxABI{} it is set to 200.
 
 \index{stack capability}
 In the MIPS back end, a pass will replace each of these allocas (and all of their uses) with one in address space 0, followed by calls to two intrinsics.

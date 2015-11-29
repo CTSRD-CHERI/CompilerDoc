@@ -1,4 +1,5 @@
 \chapter{C compiler support}
+\label{chap:c-compiler}
 
 The CHERI version of \keyword{Clang}, the C language front end for LLVM, has been modified to expose capabilities at the C level.
 
@@ -14,8 +15,8 @@ If you have the cross-compiler from the SDK, then it will automatically have its
 
 \section{The \sandboxABI}
 
-\index{sandbox ABI}
-You can select the \sandboxABI{} by passing \flag{-mabi=sandbox} to clang.  When compiling in this mode, \textit{all} pointers will be represented as capabilities.\footnote{With the current exception of function pointers.}
+\index{\sandboxABI{}}
+You can select the \sandboxABI{} by passing \flag{-mabi=sandbox} to clang.  When compiling in this mode, \textit{all} pointers (including function pointers) will be represented as capabilities.
 
 The compiler will infer the size of all stack allocations automatically and expects memory allocators to set the size appropriately for their allocations.
 
@@ -181,7 +182,7 @@ These are intended to be used to check for specific functionality and conditiona
 			\ccode{_MIPS_ARCH_CHERI} & 1 & CHERI is the target (MIPS-specific). \\
 			\ccode{__CHERI__} & 1 & CHERI is the target (may be used for non-MIPS implementations). \\
 			\ccode{_MIPS_SZCAP} & 256 & The size of a capability (in bits). \\
-			\ccode{__CHERI_SANDBOX__} & 1 & Set only if targeting the sandbox ABI.\\
+			\ccode{__CHERI_SANDBOX__} & 1 & Set only if targeting the \sandboxABI{}.\\
 			\bottomrule
 		\end{tabu}
 		\caption{\label{tbl:featmacros} Feature test predefined macros supported by CHERI Clang}
