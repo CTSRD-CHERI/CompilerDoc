@@ -243,6 +243,32 @@ The compiler aims to ensure that virtual addresses do not leak into integer regi
 This means that, as long as care is taken, memory referenced by capabilities but outside of the global data capability range can be safely collected, unless the code relies on undefined behavior or explicitly attempts to subvert the garbage collector.
 \end{notebox}
 
+\section{Casts between pointers and integers}
+
+In the hybrid ABI, most pointers are represented as integers and the cast between the two representations is purely a construct of the language type system.
+In this ABI, casts between integers and \ccode{__capability}-qualified pointers are considered as being equivalent to cast between an integer-represented pointer and a capability-represented pointer.
+In particular, the value of a cast should be the same independent of the intermediate integer step:
+\begin{csnippet}
+	void *src;
+	__capability void *dest;
+	__capability void *dest2;
+	long mid = (long)src);
+	// These are equivalent:
+	dest = (__capability void*)src;
+	dest2 = (__capability void*)mid;
+\end{csnippet}
+
+In the \sandboxABI, it is undefined behavior to cast from a pointer to an integer \textit{unless that pointer value was created by a cast from an integer}.
+The same holds for casts between integers via \ccode{__intcap_t}.
+A pointer constructed from an integer in the \sandboxABI{} is a canonical null capability with its offset set to the source integer value.
+A cast from an integer to a pointer in this ABI will extract the offset.
+
+\begin{notebox}{Other alternatives}
+	It may be better for a cast from a pointer to an integer to give the absolute virtual address.
+	This would involve leaking virtual addresses and prevent copying garbage collection (or, at least, break anything that expected comparisons on these pointer-derived integer values to be stable).
+	This may not be an issue, as in the \sandboxABI{} it is not possible to construct a valid pointer from an integer value.
+\end{notebox}
+
 \section{Input and output}
 
 The CHERI capability model supports pointers with restricted rights.
