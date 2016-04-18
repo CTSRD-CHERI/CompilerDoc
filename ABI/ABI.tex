@@ -200,7 +200,7 @@ For the above example, the compiler will emit three structures, with the followi
 The compiler does not know the size of the object and so will set the size to 0.
 After linking, the ELF file will contain the size of the symbol.
 A capability-aware linker would then fill in the size field.
-In the absence of such a linker, the \tool{fixcapsize} tool will set the size.
+In the absence of such a linker, the \tool{capsizefix} tool will set the size.
 
 Currently, the permissions field is always 0.
 Future versions will indicate in this field whether the capability is relative to \reg{gdc} or \reg{pcc} and what permissions it should have.
