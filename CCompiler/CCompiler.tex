@@ -251,7 +251,7 @@ In particular, the value of a cast should be the same independent of the interme
 	void *src;
 	void * __capability dest;
 	void * __capability dest2;
-	long mid = (long)src);
+	long mid = (long)src;
 	// These are equivalent:
 	dest = (void* __capability)src;
 	dest2 = (void* __capability)mid;
