@@ -30,7 +30,7 @@ For example:
 
 \begin{csnippet}
 void *a; // 64-bit integer interpreted as a pointer
-__capability void *b; // 256-bit capability interpreted as a pointer
+void * __capability b; // 256-bit capability interpreted as a pointer
 \end{csnippet}
 
 Implicit casts between capability and integer pointers are not permitted.
@@ -127,37 +127,36 @@ The remainder (those with \ccode{cheri} in their name) are specific to the curre
 			\headerrow
 			Clang builtin & CHERI instruction\\
 			\midrule
-			\ccode{__builtin_memcap_length_set} & \asm{CSetLen} \\
-			\ccode{__builtin_memcap_length_get} & \asm{CGetLen} \\
-			\ccode{__builtin_memcap_bounds_set} & \asm{CSetBounds} \\
-			\ccode{__builtin_memcap_base_increment} & \asm{CIncBase} \\
-			\ccode{__builtin_memcap_base_get} & \asm{CGetBase} \\
-			\ccode{__builtin_memcap_perms_and} & \asm{CAndPerm} \\
-			\ccode{__builtin_memcap_perms_get} & \asm{CGetPerm} \\
-			\ccode{__builtin_memcap_type_set} & \asm{CSetType} \\
-			\ccode{__builtin_memcap_type_get} & \asm{CGetType} \\
-			\ccode{__builtin_memcap_tag_get } & \asm{CGetTag} \\
-			\ccode{__builtin_memcap_sealed_get } & \asm{CGetSealed} \\
-			\ccode{__builtin_memcap_tag_clear } & \asm{CClearTag} \\
-			\ccode{__builtin_memcap_seal} & \asm{CSeal} \\
-			\ccode{__builtin_memcap_unseal } & \asm{CUnseal} \\
-			\ccode{__builtin_memcap_perms_check} & \asm{CCheckPerm} \\
-			\ccode{__builtin_memcap_type_check} & \asm{CCheckType} \\
-			\ccode{__builtin_memcap_offset_increment} & \asm{CIncOffset} \\
-			\ccode{__builtin_memcap_offset_set} & \asm{CSetOffset} \\
-			\ccode{__builtin_memcap_offset_get} & \asm{CGetOffset} \\
-			\ccode{__builtin_memcap_program_counter_get} & \asm{CGetPCC} \\
-			\ccode{__builtin_memcap_global_data_get} & \asm{CMove \%0, $c0} \\ %stopzone
-			\ccode{__builtin_memcap_stack_get} & \asm{CMove \%0, $c11} \\ %stopzone
+			\ccode{__builtin_cheri_length_set} & \asm{CSetLen} \\
+			\ccode{__builtin_cheri_length_get} & \asm{CGetLen} \\
+			\ccode{__builtin_cheri_bounds_set} & \asm{CSetBounds} \\
+			\ccode{__builtin_cheri_base_increment} & \asm{CIncBase} \\
+			\ccode{__builtin_cheri_base_get} & \asm{CGetBase} \\
+			\ccode{__builtin_cheri_perms_and} & \asm{CAndPerm} \\
+			\ccode{__builtin_cheri_perms_get} & \asm{CGetPerm} \\
+			\ccode{__builtin_cheri_type_get} & \asm{CGetType} \\
+			\ccode{__builtin_cheri_tag_get } & \asm{CGetTag} \\
+			\ccode{__builtin_cheri_sealed_get } & \asm{CGetSealed} \\
+			\ccode{__builtin_cheri_tag_clear } & \asm{CClearTag} \\
+			\ccode{__builtin_cheri_seal} & \asm{CSeal} \\
+			\ccode{__builtin_cheri_unseal } & \asm{CUnseal} \\
+			\ccode{__builtin_cheri_perms_check} & \asm{CCheckPerm} \\
+			\ccode{__builtin_cheri_type_check} & \asm{CCheckType} \\
+			\ccode{__builtin_cheri_offset_increment} & \asm{CIncOffset} \\
+			\ccode{__builtin_cheri_offset_set} & \asm{CSetOffset} \\
+			\ccode{__builtin_cheri_offset_get} & \asm{CGetOffset} \\
+			\ccode{__builtin_cheri_program_counter_get} & \asm{CGetPCC} \\
+			\ccode{__builtin_cheri_global_data_get} & \asm{CMove \%0, $c0} \\ %stopzone
+			\ccode{__builtin_cheri_stack_get} & \asm{CMove \%0, $c11} \\ %stopzone
 			\midrule
-			\ccode{__builtin_cheri_cause.get} & \asm{CGetCause} \\
-			\ccode{__builtin_cheri_cause.set} & \asm{CSetCause} \\
-			\ccode{__builtin_cheri_invoke_data_cap_get} & \asm{CMove \%0, $c26} \\ %stopzone
-			\ccode{__builtin_cheri_kernel_cap1_get} & \asm{CMove \%0, $c27} \\ %stopzone
-			\ccode{__builtin_cheri_kernel_cap1_get} & \asm{CMove \%0, $c28} \\ %stopzone
-			\ccode{__builtin_cheri_kernel_code_cap_get} & \asm{CMove \%0, $c29} \\ %stopzone
-			\ccode{__builtin_cheri_kernel_data_cap_get} & \asm{CMove \%0, $c30} \\ %stopzone
-			\ccode{__builtin_cheri_exception_program_counter_cap_get} & \asm{CMove \%0, $c31} \\ %stopzone
+			\ccode{__builtin_mips_cheri_cause.get} & \asm{CGetCause} \\
+			\ccode{__builtin_mips_cheri_cause.set} & \asm{CSetCause} \\
+			\ccode{__builtin_mips_cheri_invoke_data_cap_get} & \asm{CMove \%0, $c26} \\ %stopzone
+			\ccode{__builtin_mips_cheri_kernel_cap1_get} & \asm{CMove \%0, $c27} \\ %stopzone
+			\ccode{__builtin_mips_cheri_kernel_cap1_get} & \asm{CMove \%0, $c28} \\ %stopzone
+			\ccode{__builtin_mips_cheri_kernel_code_cap_get} & \asm{CMove \%0, $c29} \\ %stopzone
+			\ccode{__builtin_mips_cheri_kernel_data_cap_get} & \asm{CMove \%0, $c30} \\ %stopzone
+			\ccode{__builtin_mips_cheri_exception_program_counter_cap_get} & \asm{CMove \%0, $c31} \\ %stopzone
 			\bottomrule
 		\end{tabu}
 		\caption{\label{tbl:builtins}C built-in functions provided for CHERI.}
@@ -222,7 +221,7 @@ For example, \ccode{__CHERI_CAP_PERMISSION_PERMIT_SEAL__} is the permission bit 
 
 \section{\texttt{\_\_intcap\_t}}
 
-CHERI provides two builtin types, \ccode{__intcap_t} and \ccode{__uintcap_t}.  These are expected to be \ccode{typedef}'d to \ccode{[u]intcap_t} in the compatible ABI and \ccode{[u]intptr_t} in the \sandboxABI.  These types are the same sizes as capabilities (i.e. \ccode{sizeof(__intcap_t) == sizeof(__capability void*)}).  
+CHERI provides two builtin types, \ccode{__intcap_t} and \ccode{__uintcap_t}.  These are expected to be \ccode{typedef}'d to \ccode{[u]intcap_t} in the compatible ABI and \ccode{[u]intptr_t} in the \sandboxABI.  These types are the same sizes as capabilities (i.e. \ccode{sizeof(__intcap_t) == sizeof(void* __capability)}).  
 
 As with \ccode{intptr_t} in conventional C code, the goal for these types is to support any integer value or any pointer value, and to allow arbitrary arithmetic.  The C standard requires that, if \ccode{intptr_t} exists, it should be possible to store a pointer in it and recover the same pointer.  Most C code expects to be able to also perform arithmetic on the pointer value.
 
@@ -250,12 +249,12 @@ In this ABI, casts between integers and \ccode{__capability}-qualified pointers 
 In particular, the value of a cast should be the same independent of the intermediate integer step:
 \begin{csnippet}
 	void *src;
-	__capability void *dest;
-	__capability void *dest2;
+	void * __capability dest;
+	void * __capability dest2;
 	long mid = (long)src);
 	// These are equivalent:
-	dest = (__capability void*)src;
-	dest2 = (__capability void*)mid;
+	dest = (void* __capability)src;
+	dest2 = (void* __capability)mid;
 \end{csnippet}
 
 In the \sandboxABI, it is undefined behavior to cast from a pointer to an integer \textit{unless that pointer value was created by a cast from an integer}.
@@ -290,10 +289,10 @@ A corresponding \ccode{__output} qualifier has similar behavior, creating a writ
 For example, consider the following simple snippet:
 
 \begin{csnippet}
-int in(__input __capability int *x);
-int out(__output __capability int *x);
+int in(int * __input __capability x);
+int out(int * __output __capability x);
 
-void inout(__capability int *x)
+void inout(int * __capability x)
 {
 	in(x);
 	out(x);
@@ -329,7 +328,7 @@ When targeting CHERI, \ccode{"C"} can be used as a register constraint indicatin
 For example, to access the value in \creg{0}, you might write:
 
 \begin{csnippet}
-__capability void *c0;
+void * __capability c0;
 __asm__ __volatile__ ("cmove %0, $c0"
 	: "+C"(c0) /* c0 is a capability output operand */
 	: /* No input operands */
@@ -348,7 +347,7 @@ The \file{memcap.h} header provides more human-friendly versions of these, inclu
 
 On architectures that don't support capabilities, the two types will be equivalent to \ccode{intptr_t} and \ccode{uintptr_t} and the qualifiers will be ignored.
 
-The header also provides versions of the \ccode{__builtin_memcap} functions, without the \ccode{__builtin_} prefix.
+The header also provides versions of the \ccode{__builtin_cheri} functions, without the \ccode{__builtin_} prefix.
 The versions of these that are exposed when compiling without capability support are no-ops for the set variants and define maximum permissions and bounds for the get variants.
 
 Only the functions that are expected to be generic across all implementations of the CHERI model (as opposed to the MIPS-based concrete implementation) are exposed by this header.
@@ -374,9 +373,9 @@ They also have an extra integer argument register (\reg{v0}), which contains the
 Consider the following simple program:
 
 \begin{csnippet}
-__capability void *data;
+void * __capability data;
 __attribute__((cheri_ccallee))
-__capability void *cgetdata(void)
+void * __capability cgetdata(void)
 {
 	return data;
 }
