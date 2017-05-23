@@ -32,3 +32,41 @@ Incremental adoption is one of the goals of CHERI.  All existing unmodified bina
 With this in mind, we support two ABIs, discussed more in \autoref{chp:abis}.  One is a small extension to the base ABI, permitting \textit{some} pointers to be capabilities, but with the expectation that \creg{0} encompasses the entire (or majority of the) address space and that the memory protection can be deliberately bypassed.  The second, the \sandboxABI{}, is intended to be used when compatibility is not a concern and uses capabilities for all pointer, as well as for the stack.
 
 With care, it is possible to mix the use of both ABIs within a single program.  The layout of various data structures will be different, so the programmer is responsible for ensuring that data is correctly marshaled at boundaries.
+
+\section{Protection properties}
+
+CHERI C model aims to refine the C abstract machine in such a way that undefined and implementation-defined behaviour in C become well-defined behaviour in CHERI-C.
+In the \sandboxABI{}, many of these properties are guaranteed, whereas in the \hybridABI{} they are best-effort.
+
+\subsection{Object bounds}
+
+Objects in C are either in automatic storage (stack allocations), allocated (malloc and similar), static (globals and statics), or thread (\ccode{_Thread_local} globals and statics).
+All accesses to any of these should be via a capability in the \sandboxABI{}.
+Of these, allocated objects are only ever referred to by a pointer, the others can be referred to by name and can have the address of that name taken.
+In an implementation with precise capabilities, for example CHERI256), the capability representing the pointer to any object created in this way must have the exact bounds of the object.
+In an implementation with imprecise capabilities, for example CHERI128, the bounds of the capability may be larger than the size of the type but must not grant access to any other objects.
+
+In the \hybridABI{}, these are best effort.
+It is recommended that at least the following create capabilities with the same bounds as their equivalents in the \sandboxABI{}:
+\begin{itemize}
+	\item Directly casting the result of a \ccode{malloc}, \ccode{calloc}, \ccode{valloc}, or \ccode{posix_memalign} call to a \ccode{__capability}-qualified pointer.
+	\item Directly casting the address of a local variable with automatic storage to a \ccode{__capability}-qualified pointer.
+	\item Directly casting the address of a \ccode{static} or global variable to a \ccode{__capability}-qualified pointer.
+\end{itemize}
+
+Compilers are free to transform other pointers into capabilities if the are guaranteed not to cross an ABI boundary.
+This should have no observable impact unless the code exhibits undefined behaviour by accessing beyond the bounds of an object and simply constrains the undefined behaviour to raising a signal.
+
+\subsection{Function pointer protection}
+
+Capabilities to normal allocations should not have the executable permission set.
+Function pointers in the \sandboxABI{} should have the executable permission but no store permissions set.
+This ensures that pointers to code and to data cannot be confused.
+There is no mechanism for providing this separation in the \hybridABI{} for non-annotated pointers.
+
+\subsection{Return address protection}
+
+In the \sandboxABI{}, the return address should always be a(n executable) capability.
+If it is spilled to the stack, then the tag bit and the execute permission will protect it from being overwritten by anything other than a function pointer.
+In the \hybridABI{}, it is recommended that spills of the return address to the stack instead spill a \PCC{}-derived capability, affording the same protection.
+This can be done in an ABI-preserving way by spilling the return capability in addition to the return address, allowing simple stack walkers to continue to function.
