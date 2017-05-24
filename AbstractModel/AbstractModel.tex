@@ -68,5 +68,5 @@ There is no mechanism for providing this separation in the \hybridABI{} for non-
 
 In the \sandboxABI{}, the return address should always be a(n executable) capability.
 If it is spilled to the stack, then the tag bit and the execute permission will protect it from being overwritten by anything other than a function pointer.
-In the \hybridABI{}, it is recommended that spills of the return address to the stack instead spill a \PCC{}-derived capability, affording the same protection.
+In the \hybridABI{}, it is recommended that spills of the return address to the stack instead spill a \reg{pcc}-derived capability, affording the same protection.
 This can be done in an ABI-preserving way by spilling the return capability in addition to the return address, allowing simple stack walkers to continue to function.
