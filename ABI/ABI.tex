@@ -152,6 +152,19 @@ The top 32 bits of the \ccode{flags} field are reserved for use by the runtime, 
 
 The \ccode{class} and \ccode{method} fields contain the names of the class and method, respectively.
 
+\subsection{CHERI Callbacks}
+
+Function pointers annotated with the \ccode{cheri_callback} attribute are represented as a structure of the following form:
+
+\begin{csnippet}
+struct __cheri_callback
+{
+	__capability void *code;
+	__capability void *data;
+	uint64_t           mathod_number;
+}
+\end{csnippet}
+
 \section{Global initialization}
 
 \index{global initializers}

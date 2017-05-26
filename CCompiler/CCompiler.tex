@@ -404,3 +404,20 @@ The return value is loaded into \creg{3}.  The two integer return values are zer
 \end{asmsnippet}%stopzone
 
 In this case, the first integer return register is set to 42, but the other return registers are cleared.  
+
+\subsection{Cross-domain function pointers}
+
+Cross-domain calls require more than a single capability: they require the code and data capabilities for the target, as well as the method number.
+Function pointers annotated with \ccode{__attribute__((cheri_ccallback))} in the compiler will be translated to a hidden structure that contains these three components.
+A call to this function pointer will be replaced by a call to \ccode{cheriinvoke} with the correct arguments set up for the cross-domain call.
+
+Because such function pointers cannot be constructed from a simple cast, CHERI clang provides a builtin to construct them:
+\begin{csnippet}
+__builtin_cheri_callback_create(const char *class_name,
+                                struct cheri_object object,
+                                function fn);
+\end{csnippet}
+
+The final argument type is any function declared with the annotations required for exported functions.
+The class name is used in combination with the function to look up the method number and the CHERI object is used directly.
+This combination allows sandboxed code that is passed a function pointer of this form to call back into the specified object.
