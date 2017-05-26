@@ -70,3 +70,18 @@ In the \sandboxABI{}, the return address should always be a(n executable) capabi
 If it is spilled to the stack, then the tag bit and the execute permission will protect it from being overwritten by anything other than a function pointer.
 In the \hybridABI{}, it is recommended that spills of the return address to the stack instead spill a \reg{pcc}-derived capability, affording the same protection.
 This can be done in an ABI-preserving way by spilling the return capability in addition to the return address, allowing simple stack walkers to continue to function.
+
+\subsection{C++ protection}
+
+In C++, as in C, all objects should be referenced via a capability.
+Both pointers and references in the \sandboxABI{}, and qualified pointers and references in the \hybridABI{} are represented as capabilities.
+
+Unfortunately, in C++ it is common to store objects within arrays (in C, arrays of structs are regarded as being a single object).
+The current CHERI ABI does not provide protection in this case, though we have considered several approaches to strengthening this, for example by making arrays containing objects read only capabilities and requiring code that accesses them to load a capability to each object from the object header.
+Variations on this could prevent counterfeit object oriented programming (COOP) attacks, were overlapping objects are created by the attacker.
+
+There are several places where the sealing mechanism could enhance protection for C++.
+Most notably, vtable pointers and \ccode{type_info} object pointers are very important for C++ type safety and so could be represented as sealed capabilities.
+This would prevent user code from creating fake vtables and would make creating the overlapping objects required for COOP-style attacks difficult unless the attacker was already able to read from arbitrary memory addresses and copy the contents to the compromised buffer.
+
+Simply making the vtable pointers unsealed capabilities (as we have done) prevents some attacks of this nature, because the attacker cannot create vtable pointers by simply providing data over an IPC channel.
