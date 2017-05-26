@@ -19,6 +19,7 @@ In the \sandboxABI{}, so is \creg{11} (the stack capability).
 			\headerrow
 			Register             & Compiler usage \\
 			\midrule
+			\reg{a0}             & Exception selector register. \\
 			\reg{v0}             & Contains the method number for cross-domain calls.\\
 			\creg{0}             & Used implicitly for all non-capability memory accesses.\\
 			\creg{1}--\creg{16}  & Used for arguments in the ``fast'' calling convention. \\
@@ -29,6 +30,7 @@ In the \sandboxABI{}, so is \creg{11} (the stack capability).
 			\creg{12}            & Used with \asm{cjalr} as the destination register (\sandboxABI{}). \\
 			\creg{13}            & Capability to on-stack arguments (variadic functions only). \\
 			\creg{11}--\creg{15} & Temporary (caller-save) registers.\\
+			\creg{16}            & Exception pointer register. \\
 			\creg{17}            & Capability link register used with \asm{cjalr} (\sandboxABI{}).\\
 			\creg{16}--\creg{24} & Saved (callee-save) registers. \\
 			\creg{25}--\creg{31} & Not used by the compiler.\\
@@ -246,3 +248,40 @@ We achieve this by keeping the call sequence the same, but modifying the return 
 In all non-leaf functions, when we spill the return address to the stack we also spill a \keyword{return capability}: \reg{pcc} with its offset set to the return address.
 This can then be used with \asm{cjr} to return.
 Note that we still spill the return address, even though it is not used, because other tools (debugging tools and so on) sometimes rely on the position of the return address on the stack.
+
+
+\section{Exception handling}
+
+Exception handling in CHERI follows the Itanium C++ ABI specification, with some minor changes.
+In this model, each function has a \asm{.eh_frame} entry associated with it, describing to a generic unwind table the location of all saved registers and how to unwind the stack and restore all register values.
+The \asm{.eh_frame} entry also points to a \keyword{personality function} and a \keyword{language-specific data area} (LSDA).
+The personality function is responsible for parsing the LSDA and informing the unwinder if, for the call site where an exception was thrown, the frame needs to either catch the exception (stop unwinding) or run some cleanup code.
+In both cases, the personality function will update the saved registers to transfer control to the landing pad that corresponds to the call site and inform it of the relevant action.
+
+\subsection{Register usage}
+
+The Itanium ABI reserves two registers for communicating between the personality function and the landing pad.
+These are referred to as the exception pointer register and the exception selector register.
+The first contains the address of the thrown exception, the second the index in the type table for the exception, used by the landing pad code to branch to the correct catch or cleanup block.
+For existing targets, both of these are general purpose registers.
+
+In the \sandboxABI{}, the exception register (\creg{16}) is a capability register, granting access to the exception.
+The exception selector register remains an integer and we use the same register as the legacy ABI for this purpose.
+
+\subsection{Unwind tables}
+
+The unwind table format is unmodified.
+The tables contain a large number of addresses, but these are not transformed into capabilities.
+
+In existing implementations, the exception metadata is often as big as the code and increasing the size is unacceptable.
+ARM and Apple have compact versions of the unwind tables, which increase the density further.
+In particular, addresses are often encoded as offsets and as ULEB128 values (variable-length encodings, optimised for small values) and are stored with no padding.
+
+The size is not important in most uses, because the unwind tables are not paged in from persistent storage unless an exception is thrown.
+Transforming the addresses into capabilities would require that the run-time linker or equivalent initialise them with valid tagged capabilities on startup, which would impose a considerable start-up time penalty.
+
+Instead, all addresses in the uwnind tables are treated as being relative to an existing capability.
+In the current prototype, they are treated as relative to \reg{pcc}, but in the future most should be derived from a read-only (non executable) capability to the mapped binary or from the current frame's stored link register.
+The only exception would be the address of the personality function, though this could be addressed by adding a layer of indirection.
+ARM's 32-bit exception ABI (ARM EHABI) follows a similar route, replacing the address of the personality function with an index into a table of personality functions (a significant space saving, given that most programs have at most three distinct personality functions).
+Requiring the run-time linker to resolve the capabilities for these functions in a table would add negligible overhead.
