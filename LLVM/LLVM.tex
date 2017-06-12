@@ -64,7 +64,7 @@ The \ccode{ADD} SelectionDAG node has the invariant that the operands must be th
 This does not work for pointer addition with fat pointers, because one operand is the pointer and the other is the integer value that is being added to the pointer, which will typically be \ccode{MVT::iFATPTR} and \ccode{MVT::i64} respectively for CHERI.
 
 To address this, we add another new SelectionDAG node: \ccode{ISD::PTRADD}.
-This is naïvely lowered to \asm{CIncOffset} in the MIPS back end, but may later be folded to use a complex addressing mode.
+This is na{\"i}vely lowered to \asm{CIncOffset} in the MIPS back end, but may later be folded to use a complex addressing mode.
 
 \section{LLVM IR Intrinsics}
 
@@ -83,26 +83,27 @@ For example, all of the accessors for the special registers will move the value 
 			\headerrow
 			LLVM intrinsic & CHERI instruction\\
 			\midrule
-			\ir{llvm.mips.cap.length.set} & \asm{CSetLen} \\
-			\ir{llvm.mips.cap.length.get} & \asm{CGetLen} \\
-			\ir{llvm.mips.cap.bounds.set} & \asm{CSetBounds} \\
-			\ir{llvm.mips.cap.base.increment} & \asm{CIncBase} \\
-			\ir{llvm.mips.cap.base.get} & \asm{CGetBase} \\
-			\ir{llvm.mips.cap.perms.and} & \asm{CAndPerm} \\
-			\ir{llvm.mips.cap.perms.get} & \asm{CGetPerm} \\
-			\ir{llvm.mips.cap.type.set} & \asm{CSetType} \\
-			\ir{llvm.mips.cap.type.get} & \asm{CGetType} \\
-			\ir{llvm.mips.cap.tag.get } & \asm{CGetTag} \\
+			\ir{llvm.cheri.cap.length.set} & \asm{CSetLen} \\
+			\ir{llvm.cheri.cap.length.get} & \asm{CGetLen} \\
+			\ir{llvm.cheri.cap.bounds.set} & \asm{CSetBounds} \\
+			\ir{llvm.cheri.cap.base.increment} & \asm{CIncBase} \\
+			\ir{llvm.cheri.cap.base.get} & \asm{CGetBase} \\
+			\ir{llvm.cheri.cap.perms.and} & \asm{CAndPerm} \\
+			\ir{llvm.cheri.cap.perms.get} & \asm{CGetPerm} \\
+			\ir{llvm.cheri.cap.type.set} & \asm{CSetType} \\
+			\ir{llvm.cheri.cap.type.get} & \asm{CGetType} \\
+			\ir{llvm.cheri.cap.tag.get } & \asm{CGetTag} \\
 			\ir{llvm.mips.cap.sealed.get } & \asm{CGetSealed} \\
-			\ir{llvm.mips.cap.tag.clear } & \asm{CClearTag} \\
-			\ir{llvm.mips.cap.seal} & \asm{CSeal} \\
-			\ir{llvm.mips.cap.unseal } & \asm{CUnseal} \\
-			\ir{llvm.mips.cap.perms.check} & \asm{CCheckPerm} \\
-			\ir{llvm.mips.cap.type.check} & \asm{CCheckType} \\
-			\ir{llvm.mips.cap.offset.increment} & \asm{CIncOffset} \\
-			\ir{llvm.mips.cap.offset.set} & \asm{CSetOffset} \\
-			\ir{llvm.mips.cap.offset.get} & \asm{CGetOffset} \\
-			\ir{llvm.mips.stack.cap.get} & \asm{CMove \%0, $c11} \\
+			\ir{llvm.cheri.cap.tag.clear } & \asm{CClearTag} \\
+			\ir{llvm.cheri.cap.seal} & \asm{CSeal} \\
+			\ir{llvm.cheri.cap.unseal } & \asm{CUnseal} \\
+			\ir{llvm.cheri.cap.perms.check} & \asm{CCheckPerm} \\
+			\ir{llvm.cheri.cap.type.check} & \asm{CCheckType} \\
+			\ir{llvm.cheri.cap.offset.increment} & \asm{CIncOffset} \\
+			\ir{llvm.cheri.cap.offset.set} & \asm{CSetOffset} \\
+			\ir{llvm.cheri.cap.offset.get} & \asm{CGetOffset} \\
+			\ir{llvm.cheri.stack.cap.get} & \asm{CMove \%0, $c11} \\
+			\ir{llvm.cheri.cap.address.get} & \asm{CGetOffset + CGetBase} \\
 			\midrule
 			\ir{llvm.mips.cap.cause.get} & \asm{CGetCause} \\
 			\ir{llvm.mips.cap.cause.set} & \asm{CSetCause} \\
