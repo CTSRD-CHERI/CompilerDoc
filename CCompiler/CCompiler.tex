@@ -117,7 +117,7 @@ This is equivalent to explicitly annotating each field in the \ccode{struct} wit
 
 The C front end provides a number of built-in functions for manipulating capabilities, listed in \autoref{tbl:builtins}.
 These correspond directly to a single instruction, shown in the table.
-Most of these functions (those with \ccode{memcap} in their name) are generic and should apply to any architecture that supports memory capabilities.
+Most of these functions (those with \ccode{cheri} in their name) are generic and should apply to any architecture that supports memory capabilities.
 The remainder (those with \ccode{cheri} in their name) are specific to the current implementation.
 
 \begin{table}
@@ -339,12 +339,12 @@ __asm__ __volatile__ ("cmove %0, $c0"
 
 Note that the \ccode{+} prefix is required to indicate that this is an output register, for input operands \ccode{"C"} is correct.
 
-\section{\file{memcap.h}}
+\section{\file{cheri.h}}
 
-CHERI Clang includes a header, \file{memcap.h}, which can be included by code targeting any architecture and exposes architecture-neutral definitions of types and functions for memory capabilities.
+CHERI Clang includes a header, \file{cheri.h}, which can be included by code targeting any architecture and exposes architecture-neutral definitions of types and functions for memory capabilities.
 
 The new types and qualifiers provided by the compiler all use identifiers that start with two underscores, because this part of the namespace is reserved for the language implementation and so should not conflict with any user code.
-The \file{memcap.h} header provides more human-friendly versions of these, including \ccode{intcap_t} and \ccode{uintcap_t} types, and the \ccode{capability}, \ccode{input} and \ccode{output} qualifiers.
+The \file{cheri.h} header provides more human-friendly versions of these, including \ccode{intcap_t} and \ccode{uintcap_t} types, and the \ccode{capability}, \ccode{input} and \ccode{output} qualifiers.
 
 On architectures that don't support capabilities, the two types will be equivalent to \ccode{intptr_t} and \ccode{uintptr_t} and the qualifiers will be ignored.
 
