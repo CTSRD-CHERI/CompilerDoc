@@ -26,26 +26,37 @@ In the \sandboxABI{}, so is \creg{11} (the stack capability).
 			\creg{1}--\creg{2}   & Code and data capability arguments with the ``ccall'' calling convention. \\
 			\creg{3}             & Capability return value. \\
 			\creg{3}--\creg{10}  & Capability arguments (caller-save). \\
-			\creg{11}            & Stack capability (\sandboxABI{}). \\
+			\creg{11} (\creg{sp})& Stack capability (\sandboxABI{}). \\
 			\creg{12}            & Used with \asm{cjalr} as the destination register (\sandboxABI{}). \\
-			\creg{13}            & Capability to on-stack arguments (variadic functions only). \\
+			\creg{13}            & Capability to on-stack arguments. \\
 			\creg{11}--\creg{15} & Temporary (caller-save) registers.\\
 			\creg{16}            & Exception pointer register. \\
-			\creg{17}            & Capability link register used with \asm{cjalr} (\sandboxABI{}).\\
-			\creg{16}--\creg{24} & Saved (callee-save) registers. \\
-			\creg{25}--\creg{31} & Not used by the compiler.\\
+			\creg{17} (\creg{ra})& Capability link register used with \asm{cjalr} (\sandboxABI{}).\\
+			\creg{16}--\creg{25} & Saved (callee-save) registers. \\
+			\creg{24} (\creg{fp})& Capability frame pointer (\sandboxABI{}).\\
+			\creg{25} (\creg{bp})& Capability stack pointer (\sandboxABI{}).\\
+			\creg{24}--\creg{31} & Not used by the compiler (\hybridABI{}).\\
+			\creg{26}--\creg{31} & Not used by the compiler (\sandboxABI{}).\\
 			\bottomrule
 		\end{tabu}
 		\caption{\label{tbl:reguse}Capability register usage.}
 	\end{center}
 \end{table}
 
+Note that the ``fast'' calling convention is not guaranteed to be stable.
+This is the calling convention that the compiler is allowed to use for internal calls when 
+
 \subsection{The \sandboxABI{}}
 
-The \sandboxABI{} uses \creg{11} as a stack capability.
-The \reg{sp} and \reg{fp} registers contain offsets in the stack capability.
-It would make sense to replace \reg{sp} with the offset in \creg{11}.
-This would simplify the addressing modes for the stack and make a lot of spills cheaper in the \sandboxABI{}.
+The \sandboxABI{} uses \creg{11} as a stack capability (the assembler will also accept \creg{sp} as a name for this register).
+Currently, the bounds of this capability do not change during program execution and call frames just adjust the offset.
+Because functions are expected to save and restore the stack capability, it is possible to refine this without changing the ABI and in the future the compiler is likely to spill the incoming \creg{sp} and then restrict the bounds of the value in the register to prevent accidental overwrites.
+
+On-stack arguments are accessed relative to \creg{13}.
+Callers will zero this register before calls if there are no on-stack arguments.
+
+The following integer registers are special in the n64 ABI but have no special meaning in the \sandboxABI{}:
+\reg{sp}, \reg{fp}, \reg{s7}, \reg{t9}, \reg{ra}.
 
 The \sandboxABI{} uses the capability mechanism to protect the return address.
 In the MIPS ABI, function calls are implemented as \asm{jalr $t9, $ra}.
