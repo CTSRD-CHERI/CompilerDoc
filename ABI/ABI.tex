@@ -57,6 +57,7 @@ Callers will zero this register before calls if there are no on-stack arguments.
 
 The following integer registers are special in the n64 ABI but have no special meaning in the \sandboxABI{}:
 \reg{sp}, \reg{fp}, \reg{s7}, \reg{t9}, \reg{ra}.
+Of these, \reg{sp} is the only register that is not already marked as either caller- or callee-saved by the n64 ABI and becomes a temporary (caller-save) register in the \sandboxABI{}.
 
 The \sandboxABI{} uses the capability mechanism to protect the return address.
 In the MIPS ABI, function calls are implemented as \asm{jalr $t9, $ra}.
