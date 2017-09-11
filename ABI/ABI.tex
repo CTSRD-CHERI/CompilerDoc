@@ -2,7 +2,7 @@
 \label{chp:abis}
 \label{chap:abis} % Label in the style of CHERI Programmer's Guide
 
-The CHERI compiler supports two ABIs, an extended version of the MIPS n64 ABI and the \sandboxABI{} where every pointer is a capability.
+The CHERI compiler supports two ABIs, an extended version of the \mipsABI{} and the \sandboxABI{} where every pointer is a capability.
 The \sandboxABI{} is intended to evolve to a point where \creg{0} is never used.
 Currently, \creg{0} is used for globals, but not for any other data accesses.
 
@@ -55,9 +55,9 @@ Because functions are expected to save and restore the stack capability, it is p
 On-stack arguments are accessed relative to \creg{13}.
 Callers will zero this register before calls if there are no on-stack arguments.
 
-The following integer registers are special in the n64 ABI but have no special meaning in the \sandboxABI{}:
+The following integer registers are special in the \mipsABI{} but have no special meaning in the \sandboxABI{}:
 \reg{sp}, \reg{fp}, \reg{s7}, \reg{t9}, \reg{ra}.
-Of these, \reg{sp} is the only register that is not already marked as either caller- or callee-saved by the n64 ABI and becomes a temporary (caller-save) register in the \sandboxABI{}.
+Of these, \reg{sp} is the only register that is not already marked as either caller- or callee-saved by the \mipsABI{} and becomes a temporary (caller-save) register in the \sandboxABI{}.
 
 The \sandboxABI{} uses the capability mechanism to protect the return address.
 In the MIPS ABI, function calls are implemented as \asm{jalr $t9, $ra}.
@@ -72,14 +72,14 @@ If it is overwritten by anything other than an executable capability, then the \
 
 \section{Calling conventions}
 
-When targeting the n64 ABI, the only changes to the calling convention are to support capability arguments.
+When targeting the \mipsABI{}, the only changes to the calling convention are to support capability arguments.
 Capability arguments are passed in registers \creg{3} to \creg{10}, with \creg{3} also being used for capability return values.
 
 The normal rules for composite types apply: the portions that will fit within a register are passed in registers and the remainder is passed on the stack.
 
 \subsection{Variadic calls}
 
-The n64 ABI requires that all arguments to variadic functions are passed either on the stack or in 8 integer registers.
+The \mipsABI{} requires that all arguments to variadic functions are passed either on the stack or in 8 integer registers.
 When a \ccode{va_list} is constructed, the 8 integer values are written out.
 This means that capability arguments in variadic functions are very difficult to support and are currently not expected to work.
 To fix them, we will have to ensure that all arguments after the first capability argument are passed on the stack and that the first capability argument has a mechanism for knowing whether it is in the first 64 bytes of the \ccode{va_list} (and, if so, incrementing the pointer until it's at the end).
