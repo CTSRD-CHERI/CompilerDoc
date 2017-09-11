@@ -8,43 +8,92 @@ Currently, \creg{0} is used for globals, but not for any other data accesses.
 
 \section{Register usage}
 
-The compiler's use of capability registers is summarized in \autoref{tbl:reguse}.
-Registers \creg{16}--\creg{24} are preserved across calls, as is \creg{0}, which is never modified by the compiler.
-In the \sandboxABI{}, so is \creg{11} (the stack capability).
+The compiler's use of capability registers is summarized in \autoref{tbl:hybridreguse} and \autoref{tbl:purecapreguse}.
+The \hybridABI{} is intended as a superset of the \mipsABI{} and so only differs from the \mipsABI{} in support for capabilities.
+The \sandboxABI{} is a new ABI that is similar to the \mipsABI{} but makes full use of capabilities and so is not intended to be compatible with the \mipsABI{}.
 
 \begin{table}
 	\begin{center}
-		\begin{tabu}{ll}
+		\begin{tabu}{lccX}
 			\toprule
 			\headerrow
-			Register             & Compiler usage \\
+			Register             & ABI Name            & Saver  & Compiler usage \\
 			\midrule
-			\reg{a0}             & Exception selector register. \\
-			\reg{v0}             & Contains the method number for cross-domain calls.\\
-			\creg{0}             & Used implicitly for all non-capability memory accesses.\\
-			\creg{1}--\creg{16}  & Used for arguments in the ``fast'' calling convention. \\
-			\creg{1}--\creg{2}   & Code and data capability arguments with the ``ccall'' calling convention. \\
-			\creg{3}             & Capability return value. \\
-			\creg{3}--\creg{10}  & Capability arguments (caller-save). \\
-			\creg{11} (\creg{sp})& Stack capability (\sandboxABI{}). \\
-			\creg{12}            & Used with \asm{cjalr} as the destination register (\sandboxABI{}). \\
-			\creg{13}            & Capability to on-stack arguments. \\
-			\creg{11}--\creg{15} & Temporary (caller-save) registers.\\
-			\creg{16}            & Exception pointer register. \\
-			\creg{17} (\creg{ra})& Capability link register used with \asm{cjalr} (\sandboxABI{}).\\
-			\creg{16}--\creg{25} & Saved (callee-save) registers. \\
-			\creg{24} (\creg{fp})& Capability frame pointer (\sandboxABI{}).\\
-			\creg{25} (\creg{bp})& Capability stack pointer (\sandboxABI{}).\\
-			\creg{24}--\creg{31} & Not used by the compiler (\hybridABI{}).\\
-			\creg{26}--\creg{31} & Not used by the compiler (\sandboxABI{}).\\
+			\reg{1}              & \reg{at}            & Caller & Assembler temporary\\
+			\reg{2}              & \reg{v0}            & Caller & First integer return value, method number for cross-domain calls.\\
+			\reg{3}              & \reg{v1}            & Caller & Second integer return value.\\
+			\reg{4}              & \reg{a0}            & Caller & First integer argument, exception selector.\\
+			\reg{5}              & \reg{a1}            & Caller & First integer argument, exception object.\\
+			\reg{6}--\reg{11}    & \reg{a2}--\reg{a7}  & Caller & Integer arguments.\\
+			\reg{1}--\reg{15}    & \reg{t4}--\reg{t7}  & Caller & Temporaries.\\
+			\reg{16}--\reg{22}   & \reg{s0}--\reg{s6}  & Callee & Saved registers.\\
+			\reg{23}             & \reg{s7}            & Caller & Base pointer.\\
+			\reg{24}             & \reg{t8}            & Caller & Temporary.\\
+			\reg{25}             & \reg{t9}            & Caller & \asm{jalr} destination register.\\
+			\reg{26}--\reg{27}   & \reg{kt1}--\reg{kt2}& N/A    & Reserved for kernel.\\
+			\reg{28}             & \reg{gp}            & Callee & Global pointer.\\
+			\reg{29}             & \reg{sp}            & Callee & Stack pointer.\\
+			\reg{31}             & \reg{fp}            & Callee & Frame pointer.\\
+			\reg{31}             & \reg{ra}            & Caller & Return address.\\
+			\midrule
+			\creg{0}             &                     & Callee & Default data capability.\\
+			\creg{1}--\creg{2}   &                     & Caller & Code and data capability arguments for cross-domain calls. \\
+			\creg{3}             &                     & Caller & Capability return value. \\
+			\creg{3}--\creg{10}  &                     & Caller & Capability arguments. \\
+			\creg{11}--\creg{15} &                     & Caller & Temporary registers.\\
+			\creg{16}--\creg{25} &                     & Callee & Saved registers. \\
+			\creg{24}--\creg{31} &                     & Caller & Not used by the compiler.\\
 			\bottomrule
 		\end{tabu}
-		\caption{\label{tbl:reguse}Capability register usage.}
+		\caption{\label{tbl:hybridreguse}Interface register conventions (\hybridABI).}
 	\end{center}
 \end{table}
 
-Note that the ``fast'' calling convention is not guaranteed to be stable.
-This is the calling convention that the compiler is allowed to use for internal calls when 
+\begin{table}
+	\begin{center}
+		\begin{tabu}{lccX}
+			\toprule
+			\headerrow
+			Register             & ABI Name            & Saver  & Compiler usage \\
+			\midrule
+			\reg{1}              & \reg{at}            & Caller & Assembler temporary\\
+			\reg{2}              & \reg{v0}            & Caller & First integer return value, method number for cross-domain calls.\\
+			\reg{3}              & \reg{v1}            & Caller & Second integer return value.\\
+			\reg{4}              & \reg{a0}            & Caller & First integer argument, exception selector.\\
+			\reg{5}--\reg{11}    & \reg{a1}--\reg{a7}  & Caller & Integer arguments.\\
+			\reg{1}--\reg{15}    & \reg{t4}--\reg{t7}  & Caller & Temporaries.\\
+			\reg{16}--\reg{23}   & \reg{s0}--\reg{s7}  & Callee & Saved registers.\\
+			\reg{24}--\reg{25}   & \reg{t8}--\reg{t9}  & Caller & Temporaries.\\
+			\reg{26}--\reg{27}   & \reg{kt1}--\reg{kt2}& N/A    & Reserved for kernel.\\
+			\reg{28}--\reg{30}   &                     & Callee & Saved.\\
+			\reg{31}             &                     & Caller & Temporary.\\
+			\midrule
+			\creg{0}             &                     & Callee & Default data capability.\\
+			\creg{1}--\creg{2}   &                     & Caller & Code and data capability arguments for cross-domain calls. \\
+			\creg{3}             &                     & Caller & Capability return value. \\
+			\creg{3}--\creg{10}  &                     & Caller & Capability arguments (caller-save). \\
+			\creg{11}            & \creg{sp}           & Caller & Stack capability. \\
+			\creg{12}            &                     & Caller & \asm{cjalr} destination register. \\
+			\creg{13}            &                     & Caller & Capability to on-stack arguments. \\
+			\creg{11}--\creg{15} &                     & Caller & Temporary (caller-save) registers.\\
+			\creg{16}            &                     & Caller & Exception pointer register. \\
+			\creg{17}            & \creg{ra}           & Callee & Capability link register used with \asm{cjalr}.\\
+			\creg{16}--\creg{25} &                     & Caller & Saved (callee-save) registers. \\
+			\creg{24}            & \creg{fp}           & Callee & Capability frame pointer.\\
+			\creg{25}            & \creg{bp}           & Callee & Capability stack pointer.\\
+			\creg{26}--\creg{31} &                     & Caller & Not used by the compiler.\\
+			\bottomrule
+		\end{tabu}
+		\caption{\label{tbl:purecapreguse}Capability register usage. (\sandboxABI)}
+	\end{center}
+\end{table}
+
+
+
+Note that the calling convention described here applies only to functions that are part of a module's public ABI.
+The compiler is free to use other calling conventions for internal functions.
+For example, the current version of LLVM will use all of the (integer and
+capability) temporary registers for arguments for internal functions.
 
 \subsection{The \sandboxABI{}}
 
