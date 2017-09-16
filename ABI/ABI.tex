@@ -78,9 +78,9 @@ The \sandboxABI{} is a new ABI that is similar to the \mipsABI{} but makes full 
 			\creg{11}--\creg{15} &                     & Caller & Temporary (caller-save) registers.\\
 			\creg{16}            &                     & Caller & Exception pointer register. \\
 			\creg{17}            & \creg{ra}           & Callee & Capability link register used with \asm{cjalr}.\\
-			\creg{16}--\creg{25} &                     & Caller & Saved (callee-save) registers. \\
 			\creg{24}            & \creg{fp}           & Callee & Capability frame pointer.\\
 			\creg{25}            & \creg{bp}           & Callee & Capability stack pointer.\\
+			\creg{16}--\creg{25} &                     & Callee & Saved registers. \\
 			\creg{26}--\creg{31} &                     & Caller & Not used by the compiler.\\
 			\bottomrule
 		\end{tabu}
