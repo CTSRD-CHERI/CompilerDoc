@@ -362,3 +362,15 @@ In the current prototype, they are treated as relative to \reg{pcc}, but in the 
 The only exception would be the address of the personality function, though this could be addressed by adding a layer of indirection.
 ARM's 32-bit exception ABI (ARM EHABI) follows a similar route, replacing the address of the personality function with an index into a table of personality functions (a significant space saving, given that most programs have at most three distinct personality functions).
 Requiring the run-time linker to resolve the capabilities for these functions in a table would add negligible overhead.
+
+\subsection{Name Mangling}
+
+Name mangling in CHERI follows the Itanium C++ ABI specification with the addition that \ccode{__capability}-qualified pointer and reference types are prefixed with the extended qualifier \ccode{U3cap}.
+This allows function overloading in C++ when parameter types only differ in whether they are \ccode{__capability}-qualified or not.
+Here are some examples of functions with capability parameters and their corresponding mangled names:
+
+\begin{csnippet}
+void f(int * __capability); // _Z1fU3capPi
+void g(int & __capability); // _Z1gU3capRi
+void h(int && __capability); // _Z1hU3capOi
+\end{csnippet}
