@@ -284,7 +284,8 @@ The compiler supports two kinds of explicit cast that explicitly produce either 
 	long offset = (__cheri_offset long)somePointer;
 \end{csnippet}
 
-Casts without one of these annotations will produce a warning and implicitly access the offset.
+Casts without one of these annotations will produce a warning and implicitly give the address.
+Annotating every cast to a specific type is sometimes cumbersome and so the compiler also supports a \ccode{memory_address} attribute that marks an integer type as being expected to contain virtual addresses.
 
 A pointer constructed from an integer in the \sandboxABI{} is a canonical null capability with its offset set to the source integer value.
 
