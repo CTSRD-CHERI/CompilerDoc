@@ -243,6 +243,20 @@ The compiler aims to ensure that virtual addresses do not leak into integer regi
 This means that, as long as care is taken, memory referenced by capabilities but outside of the global data capability range can be safely collected, unless the code relies on undefined behavior or explicitly attempts to subvert the garbage collector.
 \end{notebox}
 
+\section{Pointer casts}
+
+In the \hybridABI{}, pointers may be represented either as integers or capabilities.
+Implicit casts between the two kinds are potentially dangerous for several reasons:
+
+\begin{itemize}
+	\item A capability may extend outside of the range covered by the default data capability and so not become \ccode{NULL} as a result of the cast.
+	\item A capability cast to an integer pointer will lose bounds and permissions information and so may result in memory safety errors.
+	\item A capability constructed from an integer will have lack any fine-gained permissions or bounds, yet code receiving it may expect it to do so.
+\end{itemize}
+
+It is therefore important that all such casts be audited for correctness.
+The compiler provides \ccode{__cheri_tocap} and \ccode{__cheri_fromcap} casts and will provide a warning on all casts that are not correctly annotated.
+
 \section{Casts between pointers and integers}
 
 In the hybrid ABI, most pointers are represented as integers and the cast between the two representations is purely a construct of the language type system.
@@ -258,16 +272,21 @@ In particular, the value of a cast should be the same independent of the interme
 	dest2 = (void* __capability)mid;
 \end{csnippet}
 
-In the \sandboxABI, it is undefined behavior to cast from a pointer to an integer \textit{unless that pointer value was created by a cast from an integer}.
-The same holds for casts between integers via \ccode{__intcap_t}.
-A pointer constructed from an integer in the \sandboxABI{} is a canonical null capability with its offset set to the source integer value.
-A cast from an integer to a pointer in this ABI will extract the offset.
+In the \sandboxABI, there is no guarantee within the abstract machine that it is possible to preserve a pointer via a cast to any integer type other than \ccode{__intcap_t} or \ccode{__uintcap_t}.
+A cast to a primitive integer one of these types will return the offset.
+The compiler supports two kinds of explicit cast that explicitly produce either the offset or the (virtual) address:
 
-\begin{notebox}{Other alternatives}
-	It may be better for a cast from a pointer to an integer to give the absolute virtual address.
-	This would involve leaking virtual addresses and prevent copying garbage collection (or, at least, break anything that expected comparisons on these pointer-derived integer values to be stable).
-	This may not be an issue, as in the \sandboxABI{} it is not possible to construct a valid pointer from an integer value.
-\end{notebox}
+\begin{csnippet}
+	void *somePointer;
+	// Get the address as an integer
+	long addr = (__cheri_addr long)somePointer;
+	// Get the offset as an integer
+	long offset = (__cheri_offset long)somePointer;
+\end{csnippet}
+
+Casts without one of these annotations will produce a warning and implicitly access the offset.
+
+A pointer constructed from an integer in the \sandboxABI{} is a canonical null capability with its offset set to the source integer value.
 
 \section{Input and output}
 
