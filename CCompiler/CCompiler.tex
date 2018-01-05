@@ -442,3 +442,17 @@ __builtin_cheri_callback_create(const char *class_name,
 The final argument type is any function declared with the annotations required for exported functions.
 The class name is used in combination with the function to look up the method number and the CHERI object is used directly.
 This combination allows sandboxed code that is passed a function pointer of this form to call back into the specified object.
+
+\section{C++}
+
+CHERI C++ extends the CHERI model to the C++ language.
+
+\subsection{Reference qualifiers}
+
+In the compatible ABI, the \ccode{__capability} qualifier indicates that a C++ reference should be represented by a memory capability.
+It also indicates that it can be initialised with the dereferenced value of a capability pointer without the need for an explicit cast. For example:
+
+\begin{cxxsnippet}
+int * __capability x;
+int & __capability y = *x;
+\end{cxxsnippet}
