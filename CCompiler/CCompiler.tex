@@ -120,6 +120,36 @@ These correspond directly to a single instruction, shown in the table.
 Most of these functions (those with \ccode{cheri} in their name) are generic and should apply to any architecture that supports memory capabilities.
 The remainder (those with \ccode{cheri} in their name) are specific to the current implementation.
 
+In the pure-capability mode, the \ccode{__builtin_return_address} builtin function returns the capability that will be used to return.
+
+\subsection{Alignment-related builtins}
+
+Our experiments have shown that a large proportion of the pointer manipulations that are incompatible with CHERI C are as a result of attempting to determine the alignment of a pointer.
+To simplify porting, we have introduced new builtins that will correctly report or adjust alignment of a pointer, irrespective of its underlying representation (integer or capability).
+These can be wrapped in macros for compatibility with existing compilers, though we hope that they will be widely adopted.
+
+The following pair of builtins return whether the pointer given by the first argument is aligned:
+
+\begin{csnippet}
+_Bool __builtin_is_aligned(void *, size_t);
+_Bool __builtin_is_p2aligned(void *, size_t);
+\end{csnippet}
+
+The first variant takes the desired alignment as the second parameter.
+The second takes the base-2 log of the alignment.
+It is undefined behaviour to provide a value that is not a power of two as the argument to the first form, the second makes it impossible to do so accidentally.
+
+The remaining builtins adjust the alignment of a pointer, rounding the address up or down as requested:
+
+\begin{csnippet}
+void *__builtin_align_up(void *, size_t);
+void *__builtin_p2align_up(void *, size_t);
+void *__builtin_align_down(void *, size_t);
+void *__builtin_p2align_down(void *, size_t);
+\end{csnippet}
+
+As before, each rounding direction comes with two options for specifying the alignment: either as a desired value or as the base-2 logarithm of the dsired value.
+
 \begin{table}
 	\begin{center}
 		\begin{tabu}{ll}
