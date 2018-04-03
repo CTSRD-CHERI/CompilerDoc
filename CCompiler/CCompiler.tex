@@ -486,3 +486,64 @@ It also indicates that it can be initialised with the dereferenced value of a ca
 int * __capability x;
 int & __capability y = *x;
 \end{cxxsnippet}
+
+\section{Additional warnings}
+
+The CHERI C compiler provides additional warnings to help catch assumptions that may not be valid in CHERI C.
+
+\subsection{Capability to integer casts}
+
+In most C implementations, it is safe to cast a pointer to a \ccode{long} or \ccode{long long} and back again.
+In CHERI, this is not the case, though it is safe to cast a pointer to a \ccode{__uintcap_t} or \ccode{__intcap_t}.
+
+Casts from pointer to integers are common and only some of them are unsafe.
+The \flag{-Wcapability-to-integer-cast} flag enables warnings on all such casts, unless the integer type is qualified with the \ccode{memory_address} attribute or the cast is an explicit CHERI cast.
+This warning generates a lot of false positives and so is off by default but provides a good place to start looking for problems.
+
+\subsection{Capability misuse}
+
+The \flag{-Wcheri-capability-misuse} flag enables a miscellaneous set of warnings related to common problems with capabilities in C.
+Casts from non-capability integer types to capability types will trigger a warning, because the resulting pointer may not be dereferenced.
+
+This flag also enables several warnings related to alignment.
+For example, packed structures containing capabilities and arrays containing capabilities will trigger a warning if the resulting alignment would be unsafe to store a capability.
+
+When performing a binary operation involving capabilities, the result will be a capability derived from the left operand.
+Any binary bitwise operations performed between a capability type and a non-capability type will warn, because the result of such operations is usually expected to be a non-capability type.
+The compiler can produce even more warnings on bitwise operations with the \flag{-Wcheri-bitwise-operations} flag.
+
+\subsection{No function prototype}
+
+If a function is defined without a prototype then, for K\&R C compatibility, it is assumed to be called with the variadic calling convention.
+On most platforms, this is safe for functions with small numbers of parameters.
+On CHERI-MIPS, this is not the case.
+
+The \mipsABI{} defines a variadic calling convention in which the first 64 bytes of arguments are passed in integer registers irrespective of type.
+They are then spilled to the stack in the callee.
+Such a calling convention is incompatible with capabilities.
+Whereas passing a floating point value in an integer register is expensive on modern pipelines, passing a capability in integer registers is impossible.
+As such, if any function is declared with no prototype and called in the \sandboxABI{}, the compiler will generate invalid code.
+
+The \flag{-Wmips-cheri-prototypes} flag instructs the compiler to warn about possible problems.
+
+\subsection{Excess padding}
+
+When porting code to CHERI, the size of the pointer (at least) doubles.
+This can cause structures to gain additional alignment padding.
+For example, a structure containing two \ccode{int}s, a \ccode{void*} and an \ccode{int} will be 16 bytes on a ILP32 platform, 24 bytes on an LP64 platform, and 48 bytes on CHERI.
+Rearranging the structure to put all of the \ccode{int}s together will reduce it to 32 bytes.
+If a program allocates a large number of such structures, then this can have a large impact on performance.
+
+The \flag{-Wexcess-padding} flag makes it easier to diagnose problems related to padding.
+It will report on any structure that contains a large amount of padding.
+Note that this warning is not CHERI specific and can also be useful in finding structures that originated on 32-bit platforms and gained padding when moved to 64-bit systems.
+
+This warning if off by default because it will report a lot of structures with unavoidable padding and structures whose padding has no impact on overall performance.
+If code ported to CHERI is seeing a large increase in memory usage then we recommend enabling this warning to see if there are any simple fixes.
+
+\subsection{Compiler bug warnings}
+
+The CHERI MIPS compiler is a research prototype and may contain known bugs.
+The \flag{-Wmips-cheri-bugs} flag attempts to warn on code that will trigger bugs.
+This currently warns about a code generation bug when using the atomic builtins at -O0.
+
