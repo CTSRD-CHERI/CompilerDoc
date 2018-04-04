@@ -547,3 +547,11 @@ The CHERI MIPS compiler is a research prototype and may contain known bugs.
 The \flag{-Wmips-cheri-bugs} flag attempts to warn on code that will trigger bugs.
 This currently warns about a code generation bug when using the atomic builtins at -O0.
 
+\section{Dynamic representable bounds checks}
+
+If a pointer goes too far outside of its representable bounds, then CHERI128 will clear the tag bit.
+This pointer will then trap if it is used for arithmetic, which can be difficult to debug if the use of the pointer is sufficiently far away from the place where it went out of bounds.
+
+The CHERI LLVM back end provides a pass that will insert explicit checks after each offset manipulation instruction to ensure that the tag value is the same before and afterwards.
+This can be enabled from clang with the \flag{-mllvm -enable-cheri128-fail-hard} flags.
+
