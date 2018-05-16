@@ -491,6 +491,9 @@ int & __capability y = *x;
 
 The CHERI C compiler provides additional warnings to help catch assumptions that may not be valid in CHERI C.
 
+Warnings that are considered to have a low false-positive rate are enabled by default and are can be toggled using the \flag{-Wcheri}/\flag{-Wno-cheri}/\flag{-Werror=cheri} flags.
+Warnings that are more likely to be false positives are contained in the \flag{-Wcheri-pedantic} warnings group (which is enabled by default if you compile with \flag{-pedantic}).
+
 \subsection{Capability to integer casts}
 
 In most C implementations, it is safe to cast a pointer to a \ccode{long} or \ccode{long long} and back again.
