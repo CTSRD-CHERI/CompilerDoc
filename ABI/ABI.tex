@@ -303,10 +303,38 @@ CAPABILITY RELOCATION RECORDS:
 There are currently some significant limitations:
 
 \begin{itemize}
-	\item We should have a flag to indicate whether this is a code (executable) or data capability, to indicate whether it should be derived from \reg{pcc} or \reg{gdc}.
 	\item We have no way of enforcing permissions (for example, the \ccode{__output} or \ccode{__input} qualifier on pointers).
-	\item Dynamically linked binaries will need the run-time linker to provide the symbol sizes.
+
 \end{itemize}
+
+\subsection{In dynamically linked binaries}
+In dynamically linked binaries the \asm{__cap_relocs} section is only used in order to initialize local (non-premptible) symbols.
+For references to symbols in other shared objects the static linker (LLD) will emit a \asm{R_MIPS_CHERI_CAPABILITY} relocation.
+In order to resolve this relocation, the dynamic linker should use the address of the target symbol as the base for the resulting capability.
+Furthermore, the relocation addend should be used as the offset of the resulting capability.
+There is currently no mechanism to set permissions on these capabilities. However, for \asm{STT_FUNC} type symbols the capability must be
+derived from an executable capability, and for all other symbol types the resulting capability should not be executable.
+
+\begin{notebox}{Capability length }
+	The length should be taken from the \asm{Elf_Sym} \asm{st_size} field unless the symbol type is \asm{STT_FUNC}.
+	However, for \asm{STT_FUNC} type symbols it should set the size tothe size of the containing shared objects
+	text+read-only data segment so that global read-only data can be derived from it.
+	This restriction is necessary because the compiler currently derives the capability for the global capability table
+	(which is used for every C-language global variable access and function call) from the current \reg{pcc}.
+	There are experimental compiler modes that would allow setting tight bounds on functions (such as \flag{-cheri-cap-table-abi=plt})
+	but they still have known limitations and should not be used yet.
+\end{notebox}
+
+\paragraph{Legacy mode}
+The \asm{__cap_relocs} mechanism for external symbols can still be used for dynamically linked binaries. This may be useful if it is not possible to change the dynamic linker. However, it is rather fragile and inefficient:
+\begin{itemize}
+	\item The \asm{capability_location} field needs a dynamic relocation to add the load address. This is needed so that the initialization code can determine the correct write location.
+	\item The \asm{object} field needs a dynamic relocation which resolves to the external symbol. For local symbols this is a relative relocation that adds the load address of the shared library.
+	\item For correctness every entry in the array also needs a \asm{R_MIPS_CHERI_SIZE} dynamic relocation for the size. Originally, the static linker would just write the \asm{st_size} value of the symbol at static link time (or 0 if not found) to the size field. However, for weak symbols and symbols that might be resolved from a different shared library at runtime this value might not be correct.
+\end{itemize}
+
+This old method can still be enabled by passing \flag{-Wl,--preemptible-caprelocs=legacy} but should not be used if the dynamic linker can be updated to handle the \asm{R_MIPS_CHERI_CAPABILITY} relocation.
+
 
 \section{Return address protection}
 
