@@ -104,13 +104,15 @@ Because functions are expected to save and restore the stack capability, it is p
 
 On-stack arguments are accessed relative to \creg{13}.
 If there are no on-stack arguments, callers are responsible for ensuring that \creg{13} contains a zero capability.
+The compiler currently assumes that a function without on-stack arguments has a NULL \creg{13} on entry so will not attempt to clear it
+before calling another function.
 
-\begin{notebox}{\creg{13} optimisations}
-	Being able to detect if there are on-stack arguments is generally useful for various trampoline functions.
-	In particular, code forwarding to cross-domain calls can copy arguments from the caller's stack to the callee's stack.
-	The compiler currently zeroes this register for every call that doesn't take on-stack arguments (i.e. most function calls).
-	We could most likely avoid a lot of this overhead by simply forwarding \creg{13} and perhaps by making it a callee-saved register so that the null value is preserved across calls.
-\end{notebox}
+%\begin{notebox}{\creg{13} optimisations}
+%	Being able to detect if there are on-stack arguments is generally useful for various trampoline functions.
+%	In particular, code forwarding to cross-domain calls can copy arguments from the caller's stack to the callee's stack.
+%	The compiler currently zeroes this register for every call that doesn't take on-stack arguments (i.e. most function calls).
+%	We could most likely avoid a lot of this overhead by simply forwarding \creg{13} and perhaps by making it a callee-saved register so that the null value is preserved across calls.
+%\end{notebox}
 
 
 The following integer registers are special in the \mipsABI{} but have no special meaning in the \sandboxABI{}:
