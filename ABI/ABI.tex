@@ -233,7 +233,6 @@ struct __cheri_callback
 \end{csnippet}
 
 \section{Global initialization}
-
 \index{global initializers}
 Capabilities in globals require special handling.
 Capabilities can not be statically defined in the binary as other data, because doing so will not set the tag.
@@ -241,8 +240,9 @@ Similarly, existing relocation types are not sufficient to describe a capability
 
 \begin{notebox}{Dynamic initialization}
 The initial implementation in clang simply emitted C++-style dynamic initialization code for all globals that contained non-null pointer values in the constant initializer.
-This is still the default, though this will change soon and can be disabled with the \flag{-Xclang -cheri-linker} flag.
+This is no longer the default, though thisit can be enabled with the \flag{-Xclang -no-cheri-linker} flag.
 \end{notebox}
+\subsection{In statically linked binaries}
 
 The LLVM back end will emit a special section in the ELF binary for these initializers.
 This section contains one entry for each capability that must be initialized at program launch.
@@ -284,8 +284,7 @@ After linking, the ELF file will contain the size of the symbol.
 A capability-aware linker would then fill in the size field.
 In the absence of such a linker, the \tool{capsizefix} tool will set the size.
 
-Currently, the permissions field is always 0.
-Future versions will indicate in this field whether the capability is relative to \reg{gdc} or \reg{pcc} and what permissions it should have.
+Currently, the permissions field has the high bit set for functions and is otherwise zero.
 
 You can check wither this has worked by using the \flag{-C} flag to \tool{llvm-objdump}:
 
