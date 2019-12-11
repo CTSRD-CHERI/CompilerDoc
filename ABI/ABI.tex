@@ -2,15 +2,15 @@
 \label{chp:abis}
 \label{chap:abis} % Label in the style of CHERI Programmer's Guide
 
-The CHERI compiler supports two ABIs, an extended version of the \mipsABI{} and the \sandboxABI{} where every pointer is a capability.
-The \sandboxABI{} is intended to evolve to a point where \creg{0} is never used.
+The CHERI compiler supports two ABIs, an extended version of the \mipsABI{} and the \purecapABI{} where every pointer is a capability.
+The \purecapABI{} is intended to evolve to a point where \creg{0} is never used.
 Currently, \creg{0} is used for globals, but not for any other data accesses.
 
 \section{Register usage}
 
 The compiler's use of capability registers is summarized in \autoref{tbl:hybridreguse} and \autoref{tbl:purecapreguse}.
 The \hybridABI{} is intended as a superset of the \mipsABI{} and so only differs from the \mipsABI{} in support for capabilities.
-The \sandboxABI{} is a new ABI that is similar to the \mipsABI{} but makes full use of capabilities and so is not intended to be compatible with the \mipsABI{}.
+The \purecapABI{} is a new ABI that is similar to the \mipsABI{} but makes full use of capabilities and so is not intended to be compatible with the \mipsABI{}.
 
 \begin{table}
 	\begin{center}
@@ -85,7 +85,7 @@ The \sandboxABI{} is a new ABI that is similar to the \mipsABI{} but makes full 
 			\creg{27}--\creg{31} &                     & Caller & Not used by the compiler.\\
 			\bottomrule
 		\end{tabu}
-		\caption{\label{tbl:purecapreguse}Capability register usage. (\sandboxABI)}
+		\caption{\label{tbl:purecapreguse}Capability register usage. (\purecapABI)}
 	\end{center}
 \end{table}
 
@@ -96,9 +96,9 @@ The compiler is free to use other calling conventions for internal functions.
 For example, the current version of LLVM will use all of the (integer and
 capability) temporary registers for arguments for internal functions.
 
-\subsection{The \sandboxABI{}}
+\subsection{The \purecapABI{}}
 
-The \sandboxABI{} uses \creg{11} as a stack capability (the assembler will also accept \creg{sp} as a name for this register).
+The \purecapABI{} uses \creg{11} as a stack capability (the assembler will also accept \creg{sp} as a name for this register).
 Currently, the bounds of this capability do not change during program execution and call frames just adjust the offset.
 Because functions are expected to save and restore the stack capability, it is possible to refine this without changing the ABI and in the future the compiler is likely to spill the incoming \creg{sp} and then restrict the bounds of the value in the register to prevent accidental overwrites.
 
@@ -115,13 +115,13 @@ before calling another function.
 %\end{notebox}
 
 
-The following integer registers are special in the \mipsABI{} but have no special meaning in the \sandboxABI{}:
+The following integer registers are special in the \mipsABI{} but have no special meaning in the \purecapABI{}:
 \reg{sp}, \reg{fp}, \reg{s7}, \reg{t9}, \reg{ra}.
-Of these, \reg{sp} is the only register that is not already marked as either caller- or callee-saved by the \mipsABI{} and becomes a temporary (caller-save) register in the \sandboxABI{}.
+Of these, \reg{sp} is the only register that is not already marked as either caller- or callee-saved by the \mipsABI{} and becomes a temporary (caller-save) register in the \purecapABI{}.
 
-The \sandboxABI{} uses the capability mechanism to protect the return address.
+The \purecapABI{} uses the capability mechanism to protect the return address.
 In the MIPS ABI, function calls are implemented as \asm{jalr $t9, $ra}.
-In the \sandboxABI{}, they are \asm{cjalr $c12, $c17}.
+In the \purecapABI{}, they are \asm{cjalr $c12, $c17}.
 This has two effects.
 The first is that \reg{t9} can no longer be used as a cheap way of getting the program counter for position-independent code.
 Instead, if this value is needed, the compiler will emit \asm{CGetOffset $t9,$c12}, setting \reg{t9} to the \reg{pcc}-relative address of the program counter on function entry.
@@ -144,8 +144,8 @@ When a \ccode{va_list} is constructed, the 8 integer values are written out.
 This means that capability arguments in variadic functions are very difficult to support and are currently not expected to work.
 To fix them, we will have to ensure that all arguments after the first capability argument are passed on the stack and that the first capability argument has a mechanism for knowing whether it is in the first 64 bytes of the \ccode{va_list} (and, if so, incrementing the pointer until it's at the end).
 
-\index{\sandboxABI{}!variadic functions}
-In the \sandboxABI{}, \textit{all} variadic arguments are passed on the stack, with their natural alignment (non-variadic arguments to variadic functions are passed in registers or on the stack as the normal calling convention would dictate).
+\index{\purecapABI{}!variadic functions}
+In the \purecapABI{}, \textit{all} variadic arguments are passed on the stack, with their natural alignment (non-variadic arguments to variadic functions are passed in registers or on the stack as the normal calling convention would dictate).
 
 The \creg{13} register holds a capability to the on-stack arguments.
 The \ccode{va_start} function copies the value that was stored in \creg{13} on entry to the function.
@@ -344,7 +344,7 @@ This happens automatically on x86, where the \asm{call} and \asm{ret} instructio
 If a buffer overflow allows the return address to be overwritten, then an attacker can control exactly where execution will continue after the return.
 
 \index{CFI}\index{return address}
-In the \sandboxABI{}, this kind of attack is very difficult.
+In the \purecapABI{}, this kind of attack is very difficult.
 Calls use the \asm{cjalr} instruction, so the return address is a \reg{pcc}-relative capability.
 If this is overwritten with something that is not a capability, then the return will trigger a tag violation.
 If this is overwritten by a non-executable capability, then the return will trigger a permissions violation.
@@ -357,13 +357,24 @@ This can then be used with \asm{cjr} to return.
 Note that we still spill the return address, even though it is not used, because other tools (debugging tools and so on) sometimes rely on the position of the return address on the stack.
 
 
-\section{Exception handling}
+\section{C++ Exception handling}
 
-Exception handling in CHERI follows the Itanium C++ ABI specification, with some minor changes.
+Exception handling in CHERI follows the Itanium C++ ABI specification~\cite{noauthor_ABIItaniumException_2018}, with some minor changes.
 In this model, each function has a \asm{.eh_frame} entry associated with it, describing to a generic unwind table the location of all saved registers and how to unwind the stack and restore all register values.
-The \asm{.eh_frame} entry also points to a \keyword{personality function} and a \keyword{language-specific data area} (LSDA).
+The \asm{.eh_frame} entry also points to a \keyword{personality function} and a \keyword{language-specific data area} (LSDA)~\cite{Hewlett-Packard_ExceptionHandlingTables_1999}.
 The personality function is responsible for parsing the LSDA and informing the unwinder if, for the call site where an exception was thrown, the frame needs to either catch the exception (stop unwinding) or run some cleanup code.
 In both cases, the personality function will update the saved registers to transfer control to the landing pad that corresponds to the call site and inform it of the relevant action.
+
+In the \purecapABI{}, the pointer to the personality function is a capability.
+Moreover, the individual call site records no longer store offsets relative to \texttt{@LPStart} (which is generally the start of the function)~\cite[\S{}7.3.2]{Hewlett-Packard_ExceptionHandlingTables_1999}, but instead stores the handler as an additional capability a capability.\footnote{%
+  Changing these offsets into capabilities is not ideal from a start-up performance point-of-view since it requires one additional dynamic relocation to be processed for every \cxxcode{catch} statement.
+  However, this change is required in order to support immutable (\textit{sentry}) code pointers.}
+To allow using a single byte for \ccode{NULL} landing pads (instead of requiring a capability-aligned and capability size zero value), the landing pad is still stored as a ULEB128 value.
+However, if the the landing pad has the special value \ccode{0xc}, the real landing pad is stored as a capability at the next capability-aligned address (and the \textit{action record} field follows this capability).\footnote{%
+  See \url{https://github.com/CTSRD-CHERI/libcxxrt/commit/f8e49399} for the \file{libcxxrt} implementation of this ABI difference.}
+
+% LLVM changes: \url{https://github.com/CTSRD-CHERI/llvm-project/commit/20df223ea42b11a43da3b8ffc3601c631a8ffda2} and \url{https://github.com/CTSRD-CHERI/llvm-project/commit/23f555c23761b0299ba61abc137016e63e7c4120}
+% libcxxrt changes: \url{https://github.com/CTSRD-CHERI/libcxxrt/commit/f8e4939925f1cb9b8021cc88eed62bff9f4d2311}
 
 \subsection{Register usage}
 
@@ -372,7 +383,7 @@ These are referred to as the exception pointer register and the exception select
 The first contains the address of the thrown exception, the second the index in the type table for the exception, used by the landing pad code to branch to the correct catch or cleanup block.
 For existing targets, both of these are general purpose registers.
 
-In the \sandboxABI{}, the exception register (\creg{16}) is a capability register, granting access to the exception.
+In the \purecapABI{}, the exception register (\creg{16}) is a capability register, granting access to the exception.
 The exception selector register remains an integer and we use the same register as the legacy ABI for this purpose.
 
 \subsection{Unwind tables}
