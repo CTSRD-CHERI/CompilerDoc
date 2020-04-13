@@ -19,29 +19,30 @@ The \purecapABI{} is a new ABI that is similar to the \mipsABI{} but makes full 
 			\headerrow
 			Register             & ABI Name            & Saver  & Compiler usage \\
 			\midrule
-			\reg{1}              & \reg{at}            & Caller & Assembler temporary\\
+			\reg{0}              & \reg{zero}          & Caller & Constant zero register.\\
+			\reg{1}              & \reg{at}            & Caller & Assembler temporary.\\
 			\reg{2}              & \reg{v0}            & Caller & First integer return value, method number for cross-domain calls.\\
 			\reg{3}              & \reg{v1}            & Caller & Second integer return value.\\
 			\reg{4}              & \reg{a0}            & Caller & First integer argument, exception selector.\\
-			\reg{5}              & \reg{a1}            & Caller & First integer argument, exception object.\\
+			\reg{5}              & \reg{a1}            & Caller & Second integer argument, exception object.\\
 			\reg{6}--\reg{11}    & \reg{a2}--\reg{a7}  & Caller & Integer arguments.\\
-			\reg{1}--\reg{15}    & \reg{t4}--\reg{t7}  & Caller & Temporaries.\\
+			\reg{12}--\reg{15}   & \reg{t4}--\reg{t7}  & Caller & Temporaries.\\
 			\reg{16}--\reg{22}   & \reg{s0}--\reg{s6}  & Callee & Saved registers.\\
 			\reg{23}             & \reg{s7}            & Caller & Base pointer.\\
 			\reg{24}             & \reg{t8}            & Caller & Temporary.\\
-			\reg{25}             & \reg{t9}            & Caller & \asm{jalr} destination register.\\
-			\reg{26}--\reg{27}   & \reg{kt1}--\reg{kt2}& N/A    & Reserved for kernel.\\
+			\reg{25}             & \reg{t9}            & Caller & \asm{jalr} target register.\\
+			\reg{26}--\reg{27}   & \reg{k0}--\reg{k1}  & N/A    & Reserved for kernel.\\
 			\reg{28}             & \reg{gp}            & Callee & Global pointer.\\
 			\reg{29}             & \reg{sp}            & Callee & Stack pointer.\\
 			\reg{31}             & \reg{fp}            & Callee & Frame pointer.\\
 			\reg{31}             & \reg{ra}            & Caller & Return address.\\
 			\midrule
-			\creg{0}             &                     & Callee & Default data capability.\\
-			\creg{1}--\creg{2}   &                     & Caller & Code and data capability arguments for cross-domain calls. \\
-			\creg{3}             &                     & Caller & Capability return value. \\
-			\creg{3}--\creg{10}  &                     & Caller & Capability arguments. \\
+			\creg{0}             & \creg{null}         & Callee & Constant NULL capability register.\\
+			\creg{1}--\creg{2}   &                     & Caller & Code and data capability arguments for cross-domain calls.\\
+			\creg{3}             &                     & Caller & Capability return value.\\
+			\creg{3}--\creg{10}  &                     & Caller & Capability arguments.\\
 			\creg{11}--\creg{15} &                     & Caller & Temporary registers.\\
-			\creg{16}--\creg{25} &                     & Callee & Saved registers. \\
+			\creg{16}--\creg{25} &                     & Callee & Saved registers.\\
 			\creg{24}--\creg{31} &                     & Caller & Not used by the compiler.\\
 			\bottomrule
 		\end{tabu}
@@ -56,32 +57,33 @@ The \purecapABI{} is a new ABI that is similar to the \mipsABI{} but makes full 
 			\headerrow
 			Register             & ABI Name            & Saver  & Compiler usage \\
 			\midrule
-			\reg{1}              & \reg{at}            & Caller & Assembler temporary\\
+			\reg{0}              & \reg{zero}          & Caller & Constant zero register.\\
+			\reg{1}              & \reg{at}            & Caller & Assembler temporary.\\
 			\reg{2}              & \reg{v0}            & Caller & First integer return value, method number for cross-domain calls.\\
 			\reg{3}              & \reg{v1}            & Caller & Second integer return value.\\
 			\reg{4}              & \reg{a0}            & Caller & First integer argument, exception selector.\\
 			\reg{5}--\reg{11}    & \reg{a1}--\reg{a7}  & Caller & Integer arguments.\\
-			\reg{1}--\reg{15}    & \reg{t4}--\reg{t7}  & Caller & Temporaries.\\
+			\reg{12}--\reg{15}   & \reg{t4}--\reg{t7}  & Caller & Temporaries.\\
 			\reg{16}--\reg{23}   & \reg{s0}--\reg{s7}  & Callee & Saved registers.\\
 			\reg{24}--\reg{25}   & \reg{t8}--\reg{t9}  & Caller & Temporaries.\\
-			\reg{26}--\reg{27}   & \reg{kt1}--\reg{kt2}& N/A    & Reserved for kernel.\\
+			\reg{26}--\reg{27}   & \reg{k0}--\reg{k1}  & N/A    & Reserved for kernel.\\
 			\reg{28}--\reg{30}   &                     & Callee & Saved.\\
 			\reg{31}             &                     & Caller & Temporary.\\
 			\midrule
-			\creg{0}             &                     & Callee & Default data capability.\\
-			\creg{1}--\creg{2}   &                     & Caller & Code and data capability arguments for cross-domain calls. \\
-			\creg{3}             &                     & Caller & Capability return value. \\
-			\creg{3}--\creg{10}  &                     & Caller & Capability arguments (caller-save). \\
-			\creg{11}            & \creg{sp}           & Caller & Stack capability. \\
-			\creg{12}            &                     & Caller & \asm{cjalr} destination register. \\
-			\creg{13}            &                     & Caller & Capability to on-stack arguments. \\
-			\creg{11}--\creg{15} &                     & Caller & Temporary (caller-save) registers.\\
-			\creg{16}            &                     & Caller & Exception pointer register. \\
-			\creg{17}            & \creg{ra}           & Callee & Capability link register used with \asm{cjalr}.\\
+			\creg{0}             & \creg{null}         & Callee & Constant NULL capability register.\\
+			\creg{1}--\creg{2}   &                     & Caller & Code and data capability arguments for cross-domain calls.\\
+			\creg{3}             &                     & Caller & Capability return value.\\
+			\creg{3}--\creg{10}  &                     & Caller & Capability arguments.\\
+			\creg{11}            & \creg{sp}           & Caller & Stack capability.\\
+			\creg{12}            &                     & Caller & \asm{cjalr} target register.\\
+			\creg{13}            &                     & Caller & Capability to on-stack arguments.\\
+			\creg{11}--\creg{15} &                     & Caller & Temporary registers.\\
+			\creg{16}            &                     & Caller & Exception pointer register.\\
+			\creg{17}            & \creg{ra}           & Callee & Capability return register.\\
 			\creg{24}            & \creg{fp}           & Callee & Capability frame pointer.\\
-			\creg{25}            & \creg{bp}           & Callee & Capability stack pointer.\\
-			\creg{16}--\creg{25} &                     & Callee & Saved registers. \\
-			\creg{26}            & \creg{gp}           & N/A & Capability globals pointer (\reg{idc} when used with \asm{CCall}) .\\
+			\creg{25}            & \creg{bp}           & Callee & Capability base pointer.\\
+			\creg{16}--\creg{25} &                     & Callee & Saved registers.\\
+			\creg{26}            & \creg{gp}           & N/A & Capability globals pointer (\reg{idc} when used with \asm{CCall}).\\
 			\creg{27}--\creg{31} &                     & Caller & Not used by the compiler.\\
 			\bottomrule
 		\end{tabu}
