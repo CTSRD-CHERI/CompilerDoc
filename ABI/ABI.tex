@@ -34,7 +34,7 @@ The \purecapABI{} is a new ABI that is similar to the \mipsABI{} but makes full 
 			\reg{26}--\reg{27}   & \reg{k0}--\reg{k1}  & N/A    & Reserved for kernel.\\
 			\reg{28}             & \reg{gp}            & Callee & Global pointer.\\
 			\reg{29}             & \reg{sp}            & Callee & Stack pointer.\\
-			\reg{31}             & \reg{fp}            & Callee & Frame pointer.\\
+			\reg{30}             & \reg{fp}            & Callee & Frame pointer.\\
 			\reg{31}             & \reg{ra}            & Caller & Return address.\\
 			\midrule
 			\creg{0}             & \creg{null}         & Callee & Constant NULL capability register.\\
@@ -67,8 +67,10 @@ The \purecapABI{} is a new ABI that is similar to the \mipsABI{} but makes full 
 			\reg{16}--\reg{23}   & \reg{s0}--\reg{s7}  & Callee & Saved registers.\\
 			\reg{24}--\reg{25}   & \reg{t8}--\reg{t9}  & Caller & Temporaries.\\
 			\reg{26}--\reg{27}   & \reg{k0}--\reg{k1}  & N/A    & Reserved for kernel.\\
-			\reg{28}--\reg{30}   &                     & Callee & Saved.\\
-			\reg{31}             &                     & Caller & Temporary.\\
+			\reg{28}             &                     & Callee & Saved.\\ % gp
+			\reg{29}             &                     & Caller & Temporary.\\ % sp
+			\reg{30}             &                     & Callee & Saved.\\ % fp
+			\reg{31}             &                     & Callee & Saved.\\ % ra
 			\midrule
 			\creg{0}             & \creg{null}         & Callee & Constant NULL capability register.\\
 			\creg{1}--\creg{2}   &                     & Caller & Code and data capability arguments for cross-domain calls.\\
